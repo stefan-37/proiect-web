@@ -15,6 +15,7 @@ func UserSignUp(c *gin.Context, database *gorm.DB) {
 		c.JSON(http.StatusBadRequest,gin.H{
 			"error":"Failed to read body",
 		})
+		return
 	}
 
 	user, err := models.UserFactory(
@@ -27,15 +28,19 @@ func UserSignUp(c *gin.Context, database *gorm.DB) {
 		c.JSON(http.StatusBadRequest,gin.H{
 			"error":"Invalid field(s)",
 		})
+		return
+
 	}
 
 	if repository.CreateUser(user, database) != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{
 			"error":"Failed to create user",
 		})
+		return
 	}
 
 	c.JSON(http.StatusOK,gin.H{
 		"message":"User created successfully",
 	})
+	
 }

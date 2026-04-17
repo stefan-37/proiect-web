@@ -13,7 +13,7 @@ func CreateAdmin(admin models.Admin, database *gorm.DB) error{
 	}
 	admin.Password = string(hash)
 	err := database.Create(&admin)
-	if err != nil{
+	if err.Error != nil{
 		return err.Error
 	}
 	return nil
@@ -22,7 +22,7 @@ func CreateAdmin(admin models.Admin, database *gorm.DB) error{
 func GetAdminByEmail(email string, database *gorm.DB) (models.Admin, error){
 	var admin models.Admin
 	err := database.Where("email = ?", email).First(&admin)
-	if err != nil{
+	if err.Error != nil{
 		return models.Admin{}, err.Error
 	}
 	return admin, nil
@@ -31,7 +31,7 @@ func GetAdminByEmail(email string, database *gorm.DB) (models.Admin, error){
 func GetAdminByID(id uint, database *gorm.DB) (models.Admin, error){
 	var admin models.Admin
 	err := database.Where("id = ?", id).First(&admin)
-	if err != nil{
+	if err.Error != nil{
 		return models.Admin{}, err.Error
 	}	
 	return admin, nil
@@ -39,7 +39,7 @@ func GetAdminByID(id uint, database *gorm.DB) (models.Admin, error){
 
 func UpdateAdmin(admin models.Admin, database *gorm.DB) error{
 	err := database.Save(&admin)
-	if err != nil{
+	if err.Error != nil{
 		return err.Error	
 	}
 	return nil
@@ -47,7 +47,7 @@ func UpdateAdmin(admin models.Admin, database *gorm.DB) error{
 
 func DeleteAdminByEmail(email string, database *gorm.DB) error{
 	err := database.Where("email = ?", email).Delete(&models.Admin{})
-	if err != nil{
+	if err.Error != nil{
 		return err.Error
 	}
 	return nil

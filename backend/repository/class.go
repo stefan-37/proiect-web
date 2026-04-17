@@ -7,7 +7,7 @@ import (
 
 func CreateClass (class models.Class, database *gorm.DB) error {
 	err := database.Create(&class)
-	if err != nil {
+	if err.Error != nil {
 		return err.Error
 	}
 	return nil
@@ -16,7 +16,7 @@ func CreateClass (class models.Class, database *gorm.DB) error {
 func GetClassByID(id uint, database *gorm.DB) (models.Class, error) {
 	var class models.Class
 	err := database.Where("id = ?", id).First(&class)
-	if err != nil {
+	if err.Error != nil {
 		return models.Class{}, err.Error
 	}
 	return class, nil
@@ -24,7 +24,7 @@ func GetClassByID(id uint, database *gorm.DB) (models.Class, error) {
 
 func UpdateClass(class models.Class, database *gorm.DB) error {
 	err := database.Save(&class)	
-	if err != nil {
+	if err.Error != nil {
 		return err.Error
 	}
 	return nil
@@ -32,7 +32,7 @@ func UpdateClass(class models.Class, database *gorm.DB) error {
 
 func DeleteClassByID(id uint, database *gorm.DB) error {
 	err := database.Where("id = ?", id).Delete(&models.Class{})	
-	if err != nil {	
+	if err.Error != nil {	
 		return err.Error
 	}
 	return nil

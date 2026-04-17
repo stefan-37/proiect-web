@@ -14,17 +14,18 @@ import (
 
 func UserLogin(c *gin.Context, database *gorm.DB) {
 	var body struct {
-		email    string
-		password string
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	if c.BindJSON(&body) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read body",
 		})
+		return
 	}
 
-	user, DBerr := repository.GetUserByEmail(body.email, database)
+	user, DBerr := repository.GetUserByEmail(body.Email, database)
 
 	if DBerr != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -33,7 +34,7 @@ func UserLogin(c *gin.Context, database *gorm.DB) {
 		return
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.password))
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(body.Password))
 
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -42,7 +43,7 @@ func UserLogin(c *gin.Context, database *gorm.DB) {
 		return
 	}
 
-	token := jwt.NewWithClaims(jwt.SigningMethodES256, jwt.MapClaims{
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"subject": user.ID,
 		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(),
 	})

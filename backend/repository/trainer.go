@@ -14,16 +14,16 @@ func CreateTrainer(trainer models.Trainer, database *gorm.DB) error {
 	trainer.Password = string(hash)
 
 	err := database.Create(&trainer)
-	if err != nil{
+	if err.Error != nil{
 		return err.Error
 	}
 	return nil
 }
 
-func GetTRainerByEmail(email string, database *gorm.DB) (models.Trainer, error) {
+func GetTrainerByEmail(email string, database *gorm.DB) (models.Trainer, error) {
 	var trainer models.Trainer
 	err := database.Where("email = ?", email).First(&trainer)
-	if err != nil{
+	if err.Error != nil{
 		return models.Trainer{},err.Error
 	}
 	return trainer, nil
@@ -32,7 +32,7 @@ func GetTRainerByEmail(email string, database *gorm.DB) (models.Trainer, error) 
 func GetTrainerByID(id uint, database *gorm.DB) (models.Trainer, error){
 	var trainer models.Trainer
 	err := database.Where("id = ?", id).First(&trainer)
-	if err != nil{
+	if err.Error != nil{
 		return models.Trainer{},err.Error
 	}
 	return trainer, nil
@@ -40,7 +40,7 @@ func GetTrainerByID(id uint, database *gorm.DB) (models.Trainer, error){
 
 func  UpdateTrainer(trainer models.Trainer, database *gorm.DB) error{
 	err := database.Save(&trainer)
-	if err != nil{
+	if err.Error != nil{
 		return err.Error
 	}
 	return nil
@@ -48,7 +48,7 @@ func  UpdateTrainer(trainer models.Trainer, database *gorm.DB) error{
 
 func DeleteTrainerByEmail(email string, database *gorm.DB) error{
 	err := database.Where("email = ?", email).Delete(&models.Trainer{})
-	if err != nil{
+	if err.Error != nil{
 		return err.Error
 	}
 	return nil

@@ -68,5 +68,9 @@ func UserSubscriptionFactory(options ...UserSubscriptionOption) (*UserSubscripti
 		option(userSubscription)
 	}
 
+	if err := userSubscription.UserSubscriptionBuild(); err != nil {
+		return nil, err
+	}
+
 	return userSubscription, nil
 }
