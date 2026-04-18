@@ -46,8 +46,8 @@ func  UpdateTrainer(trainer *models.Trainer, database *gorm.DB) error{
 	return nil
 }
 
-func DeleteTrainerByEmail(email string, database *gorm.DB) error{
-	err := database.Where("email = ?", email).Delete(&models.Trainer{})
+func DeleteTrainerByID(id uint, database *gorm.DB) error{
+	err := database.Where("id = ?", id).Delete(&models.Trainer{})
 	if err.Error != nil{
 		return err.Error
 	}

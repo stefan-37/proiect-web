@@ -26,6 +26,13 @@ func UserAuthMiddleware(c *gin.Context) {
 		return []byte(config.Key), nil
 	})
 
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "Unauthorized",
+		})
+		return
+	}
+
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 
 		if float64(time.Now().Unix()) > claims["exp"].(float64){
@@ -75,6 +82,13 @@ func AdminAuthMiddleware(c *gin.Context) {
 		return []byte(config.Key), nil
 	})
 
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "Unauthorized",
+		})
+		return
+	}
+
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 
 		if float64(time.Now().Unix()) > claims["exp"].(float64){
@@ -123,6 +137,13 @@ func TrainerAuthMiddleware(c *gin.Context) {
 		}
 		return []byte(config.Key), nil
 	})
+
+	if err != nil {
+		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "Unauthorized",
+		})
+		return
+	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 

@@ -15,15 +15,22 @@ func SetupRouter() *gin.Engine {
 	user.POST("/login", handler.UserLogin)
 	user.DELETE("/delete", middleware.UserAuthMiddleware, handler.UserDelete)
 	user.PUT("/update", middleware.UserAuthMiddleware, handler.UserUpdate)
+	user.GET("/get", middleware.UserAuthMiddleware, handler.UserGet)
 
 
 	admin := r.Group("/admin")
 	admin.POST("/signup", handler.AdminSignUp)
 	admin.POST("/login", handler.AdminLogin)
+	admin.DELETE("/delete", middleware.AdminAuthMiddleware, handler.AdminDelete)
+	admin.PUT("/update", middleware.AdminAuthMiddleware, handler.AdminUpdate)
+	admin.GET("/get", middleware.AdminAuthMiddleware, handler.AdminGet)
 
 	trainer := r.Group("/trainer")
 	trainer.POST("/login", handler.TrainerLogin)
-	//trainer.POST("/signup", handler.TrainerSignUp)
+	trainer.POST("/signup", handler.TrainerSignUp)
+	trainer.DELETE("/delete", middleware.TrainerAuthMiddleware, handler.TrainerDelete)
+	trainer.PUT("/update", middleware.TrainerAuthMiddleware, handler.TrainerUpdate)
+	trainer.GET("/get", middleware.TrainerAuthMiddleware, handler.TrainerGet)
 
 	return r
 }

@@ -45,8 +45,8 @@ func UpdateAdmin(admin *models.Admin, database *gorm.DB) error{
 	return nil
 }
 
-func DeleteAdminByEmail(email string, database *gorm.DB) error{
-	err := database.Where("email = ?", email).Delete(&models.Admin{})
+func DeleteAdminByID(id uint, database *gorm.DB) error{
+	err := database.Where("id = ?", id).Delete(&models.Admin{})
 	if err.Error != nil{
 		return err.Error
 	}

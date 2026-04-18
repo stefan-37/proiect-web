@@ -59,6 +59,13 @@ func UserDelete(c *gin.Context, database *gorm.DB) {
 
 	userData, err := user.(models.User)
 
+	if !err {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read user data",
+		})
+		return
+	}
+
 	if repository.DeleteUserByID(userData.ID, database) != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{
 			"error":"Failed to delete user",
@@ -122,5 +129,21 @@ func UserUpdate(c *gin.Context, database *gorm.DB) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "User updated successfully",
 	})
+
+}
+
+func UserGet(c *gin.Context, database *gorm.DB) {
+
+	user, _ := c.Get("user")
+	userData, ok := user.(models.User)
+
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read user data",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, userData)
 
 }

@@ -16,3 +16,7 @@ func UserDelete(c *gin.Context) {
 func UserUpdate(c *gin.Context) {
 	service.UserUpdate(c, database)
 }
+
+func UserGet(c *gin.Context) {
+	service.UserGet(c, database)
+}
