@@ -6,7 +6,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateTrainer(trainer models.Trainer, database *gorm.DB) error {
+func CreateTrainer(trainer *models.Trainer, database *gorm.DB) error {
 	hash, hasherr := bcrypt.GenerateFromPassword([]byte(trainer.Password),bcrypt.DefaultCost)
 	if hasherr != nil {
 		return hasherr
@@ -38,7 +38,7 @@ func GetTrainerByID(id uint, database *gorm.DB) (models.Trainer, error){
 	return trainer, nil
 }
 
-func  UpdateTrainer(trainer models.Trainer, database *gorm.DB) error{
+func  UpdateTrainer(trainer *models.Trainer, database *gorm.DB) error{
 	err := database.Save(&trainer)
 	if err.Error != nil{
 		return err.Error

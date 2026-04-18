@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateClass (class models.Class, database *gorm.DB) error {
+func CreateClass (class *models.Class, database *gorm.DB) error {
 	err := database.Create(&class)
 	if err.Error != nil {
 		return err.Error
@@ -22,7 +22,7 @@ func GetClassByID(id uint, database *gorm.DB) (models.Class, error) {
 	return class, nil
 }
 
-func UpdateClass(class models.Class, database *gorm.DB) error {
+func UpdateClass(class *models.Class, database *gorm.DB) error {
 	err := database.Save(&class)	
 	if err.Error != nil {
 		return err.Error

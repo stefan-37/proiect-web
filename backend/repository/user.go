@@ -55,3 +55,11 @@ func DeleteUserByEmail(email string, database *gorm.DB) error {
 	}
 	return nil
 }
+
+func DeleteUserByID(id uint, database *gorm.DB) error {
+	err := database.Where("id = ?", id).Delete(&models.User{})
+	if err.Error != nil {
+		return err.Error
+	}
+	return nil
+}

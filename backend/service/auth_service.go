@@ -63,3 +63,107 @@ func UserLogin(c *gin.Context, database *gorm.DB) {
 	c.JSON(http.StatusOK, gin.H{})
 
 }
+
+func AdminLogin(c *gin.Context, database *gorm.DB) {
+	var body struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	if c.BindJSON(&body) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read body",
+		})
+		return
+	}
+
+	admin, DBerr := repository.GetAdminByEmail(body.Email, database)
+
+	if DBerr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid email or password",
+		})
+		return
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(admin.Password), []byte(body.Password))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid email or password",
+		})
+		return
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"subject": admin.ID,
+		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(config.Key))
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to generate token",
+		})
+		return
+	}
+
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("key", tokenString, 3600*24*7, "", "", false, true)
+
+	c.JSON(http.StatusOK, gin.H{})
+
+}
+
+func TrainerLogin(c *gin.Context, database *gorm.DB) {
+	var body struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	if c.BindJSON(&body) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read body",
+		})
+		return
+	}
+
+	trainer, DBerr := repository.GetTrainerByEmail(body.Email, database)
+
+	if DBerr != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid email or password",
+		})
+		return
+	}
+
+	err := bcrypt.CompareHashAndPassword([]byte(trainer.Password), []byte(body.Password))
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid email or password",
+		})
+		return
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"subject": trainer.ID,
+		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(),
+	})
+
+	tokenString, err := token.SignedString([]byte(config.Key))
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to generate token",
+		})
+		return
+	}
+
+	c.SetSameSite(http.SameSiteLaxMode)
+	c.SetCookie("key", tokenString, 3600*24*7, "", "", false, true)
+
+	c.JSON(http.StatusOK, gin.H{})
+
+}

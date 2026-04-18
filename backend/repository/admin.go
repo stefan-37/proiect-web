@@ -6,7 +6,7 @@ import(
 	"gorm.io/gorm"
 )
 
-func CreateAdmin(admin models.Admin, database *gorm.DB) error{
+func CreateAdmin(admin *models.Admin, database *gorm.DB) error{
 	hash, hasherr := bcrypt.GenerateFromPassword([]byte(admin.Password),bcrypt.DefaultCost)
 	if hasherr != nil{
 		return hasherr
@@ -37,7 +37,7 @@ func GetAdminByID(id uint, database *gorm.DB) (models.Admin, error){
 	return admin, nil
 }
 
-func UpdateAdmin(admin models.Admin, database *gorm.DB) error{
+func UpdateAdmin(admin *models.Admin, database *gorm.DB) error{
 	err := database.Save(&admin)
 	if err.Error != nil{
 		return err.Error	
