@@ -1,3 +1,5 @@
 .env
 *.db
 *.js
+.vscode
+identified_issues.md

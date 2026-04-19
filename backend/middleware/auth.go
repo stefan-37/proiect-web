@@ -42,6 +42,13 @@ func UserAuthMiddleware(c *gin.Context) {
 		return	
 		}
 
+		if claims["role"] != "user" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Unauthorized",
+			})
+			return	
+		}
+
 		var user models.User
 
 		db.GetDB().First(&user, claims["subject"])
@@ -98,6 +105,13 @@ func AdminAuthMiddleware(c *gin.Context) {
 		return	
 		}
 
+		if claims["role"] != "admin" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Unauthorized",
+			})
+			return	
+		}
+
 		var admin models.Admin
 
 		db.GetDB().First(&admin, claims["subject"])
@@ -152,6 +166,13 @@ func TrainerAuthMiddleware(c *gin.Context) {
 			"error": "Unauthorized",
 		})
 		return	
+		}
+
+		if claims["role"] != "trainer" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+				"error": "Unauthorized",
+			})
+			return	
 		}
 
 		var trainer models.Trainer

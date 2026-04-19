@@ -46,6 +46,7 @@ func UserLogin(c *gin.Context, database *gorm.DB) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"subject": user.ID,
 		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"role":    "user",
 	})
 
 	tokenString, err := token.SignedString([]byte(config.Key))
@@ -60,7 +61,9 @@ func UserLogin(c *gin.Context, database *gorm.DB) {
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("key", tokenString, 3600*24*7, "", "", false, true)
 
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+	})
 
 }
 
@@ -98,6 +101,7 @@ func AdminLogin(c *gin.Context, database *gorm.DB) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"subject": admin.ID,
 		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"role":    "admin",
 	})
 
 	tokenString, err := token.SignedString([]byte(config.Key))
@@ -112,7 +116,9 @@ func AdminLogin(c *gin.Context, database *gorm.DB) {
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("key", tokenString, 3600*24*7, "", "", false, true)
 
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+	})
 
 }
 
@@ -150,6 +156,7 @@ func TrainerLogin(c *gin.Context, database *gorm.DB) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"subject": trainer.ID,
 		"exp":     time.Now().Add(time.Hour * 24 * 7).Unix(),
+		"role":    "trainer",
 	})
 
 	tokenString, err := token.SignedString([]byte(config.Key))
@@ -164,6 +171,8 @@ func TrainerLogin(c *gin.Context, database *gorm.DB) {
 	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie("key", tokenString, 3600*24*7, "", "", false, true)
 
-	c.JSON(http.StatusOK, gin.H{})
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Login successful",
+	})
 
 }

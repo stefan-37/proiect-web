@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateClass (class *models.Class, database *gorm.DB) error {
+func CreateClass(class *models.Class, database *gorm.DB) error {
 	err := database.Create(&class)
 	if err.Error != nil {
 		return err.Error

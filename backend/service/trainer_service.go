@@ -64,6 +64,11 @@ func TrainerDelete(c *gin.Context, database *gorm.DB) {
 		})
 		return
 	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Trainer deleted successfully",
+	})
+
 }
 
 func TrainerUpdate(c *gin.Context, database *gorm.DB) {

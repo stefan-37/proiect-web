@@ -90,9 +90,9 @@ func UserUpdate(c *gin.Context, database *gorm.DB) {
 	}
 
 	var body struct {
-		Name     *string `json:"name"`
-		Email    *string `json:"email"`
-		Password *string `json:"password"`
+		Name     string `json:"name"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 
 	if c.BindJSON(&body) != nil {
@@ -102,14 +102,14 @@ func UserUpdate(c *gin.Context, database *gorm.DB) {
 		return
 	}
 
-	if body.Name != nil {
-		userData.Name = *body.Name
+	if body.Name != "" {
+		userData.Name = body.Name
 	}
-	if body.Email != nil {
-		userData.Email = *body.Email
+	if body.Email != "" {
+		userData.Email = body.Email
 	}
-	if body.Password != nil {
-		hash, err := bcrypt.GenerateFromPassword([]byte(*body.Password), bcrypt.DefaultCost)
+	if body.Password != "" {
+		hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error": "Failed to hash password",
