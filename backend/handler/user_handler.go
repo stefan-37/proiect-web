@@ -20,3 +20,11 @@ func UserUpdate(c *gin.Context) {
 func UserGet(c *gin.Context) {
 	service.UserGet(c, database)
 }
+
+func UserSubscribe(c *gin.Context) {
+	service.UserSubscribe(c, database)
+}
+
+func GetUserSubscriptions(c *gin.Context) {
+	service.GetUserSubscriptions(c, database)
+}

@@ -147,3 +147,28 @@ func UserGet(c *gin.Context, database *gorm.DB) {
 	c.JSON(http.StatusOK, userData)
 
 }
+
+func GetUserSubscriptions(c *gin.Context, database *gorm.DB) {
+
+	user, _ := c.Get("user")
+	userData, ok := user.(models.User)
+
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read user data",
+		})
+		return
+	}
+
+	subscriptions, err := repository.GetUserSubscriptionByUserID(userData.ID, database)
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user subscriptions",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, subscriptions)
+
+}

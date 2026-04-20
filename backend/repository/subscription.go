@@ -37,3 +37,12 @@ func DeleteSubscriptionByID(id uint, database *gorm.DB) error {
 	}	
 	return nil
 }
+
+func GetAllSubscriptions(database *gorm.DB) ([]models.Subscription, error) {
+	var subscriptions []models.Subscription
+	err := database.Find(&subscriptions)
+	if err.Error != nil {
+		return nil, err.Error
+	}
+	return subscriptions, nil
+}

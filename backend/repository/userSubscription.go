@@ -5,7 +5,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func CreateUserSubscription(userSubscription models.UserSubscription, database *gorm.DB) error {
+func CreateUserSubscription(userSubscription *models.UserSubscription, database *gorm.DB) error {
 	err := database.Create(&userSubscription)
 	if err.Error != nil {
 		return err.Error
@@ -13,9 +13,9 @@ func CreateUserSubscription(userSubscription models.UserSubscription, database *
 	return nil
 }
 
-func GetUserSubscriptionByID(id uint, database *gorm.DB) (models.UserSubscription, error) {
+func GetUserSubscriptionByUserID(id uint, database *gorm.DB) (models.UserSubscription, error) {
 	var userSubscription models.UserSubscription
-	err := database.Where("id = ?", id).First(&userSubscription)
+	err := database.Where("user_id = ?", id).First(&userSubscription)
 	if err.Error != nil {
 		return models.UserSubscription{}, err.Error
 	}	

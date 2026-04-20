@@ -13,7 +13,6 @@ type UserSubscription struct {
 	SubscriptionID uint      `json:"subscription_id" gorm:"not null"`
 	StartedAt      time.Time `json:"started_at"`
 	ExpiresAt      time.Time `json:"expires_at"`
-	AdminID        uint      `json:"admin_id" gorm:"not null"`
 }
 
 type UserSubscriptionOption func(*UserSubscription)
@@ -42,11 +41,6 @@ func UserSubscriptionWithExpiresAt(expiresAt time.Time) UserSubscriptionOption {
 	}
 }
 
-func UserSubscriptionWithAdminID(adminID uint) UserSubscriptionOption {
-	return func(us *UserSubscription) {
-		us.AdminID = adminID
-	}
-}
 
 func (us *UserSubscription) UserSubscriptionBuild() error {
 	if us.UserID == 0 {
@@ -54,9 +48,6 @@ func (us *UserSubscription) UserSubscriptionBuild() error {
 	}
 	if us.SubscriptionID == 0 {
 		return fmt.Errorf("invalid subscription ID")
-	}
-	if us.AdminID == 0 {
-		return fmt.Errorf("invalid admin ID")
 	}
 	return nil
 }
