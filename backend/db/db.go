@@ -1,7 +1,7 @@
 package db
 
 import (
-  "github.com/glebarez/sqlite"
+  "gorm.io/driver/postgres"
   "gorm.io/gorm"
   "sync"
 )
@@ -13,7 +13,7 @@ var instance struct {
 
 func GetDB() *gorm.DB {
 	  instance.once.Do(func() {
-		db, err := gorm.Open(sqlite.Open("gym.db"), &gorm.Config{})
+		db, err := gorm.Open(postgres.Open("postgresql://postgres:password@postgres:5432/mydatabase?sslmode=disable"), &gorm.Config{})
 		if err != nil {
 			panic("failed to connect database" + err.Error())
 		}

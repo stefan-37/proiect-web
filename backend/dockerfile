@@ -1,14 +1,19 @@
-FROM golang:1.26-alpine 
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
-COPY go.mod ./
-COPY go.sum ./
+COPY go.mod go.sum ./
 RUN go mod download
+COPY . .
+RUN go build -o ./api
 
-COPY . ./
-RUN go build -o main 
+FROM gcr.io/distroless/base-debian12
+
+WORKDIR /running
+
+COPY --from=builder /app/api ./api
 
 EXPOSE 8080
-CMD [ "./main" ]
+CMD ["./api"]
+
 
