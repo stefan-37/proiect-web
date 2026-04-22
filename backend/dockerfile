@@ -12,6 +12,7 @@ FROM gcr.io/distroless/base-debian12
 WORKDIR /running
 
 COPY --from=builder /app/api ./api
+COPY --from=builder /app/seed ./seed
 
 EXPOSE 8080
 CMD ["./api"]
