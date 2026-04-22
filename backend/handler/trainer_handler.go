@@ -20,3 +20,7 @@ func TrainerUpdate(c *gin.Context) {
 func TrainerGet(c *gin.Context) {
 	service.TrainerGet(c, database)
 }
+
+func TrainerCreateClass(c *gin.Context) {
+	service.TrainerCreateClass(c, database)
+}

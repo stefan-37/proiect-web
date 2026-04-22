@@ -17,7 +17,6 @@ func SetupRouter() *gin.Engine {
 	user.PUT("/update", middleware.UserAuthMiddleware, handler.UserUpdate)
 	user.GET("/get", middleware.UserAuthMiddleware, handler.UserGet)
 	user.POST("/subscribe", middleware.UserAuthMiddleware, handler.UserSubscribe)
-	user.GET("/subscriptions", middleware.UserAuthMiddleware, handler.GetSubscriptions)
 	user.GET("/subscription", middleware.UserAuthMiddleware, handler.GetUserSubscriptions)
 
 	admin := r.Group("/admin")
@@ -26,8 +25,6 @@ func SetupRouter() *gin.Engine {
 	admin.DELETE("/delete", middleware.AdminAuthMiddleware, handler.AdminDelete)
 	admin.PUT("/update", middleware.AdminAuthMiddleware, handler.AdminUpdate)
 	admin.GET("/get", middleware.AdminAuthMiddleware, handler.AdminGet)
-	admin.GET("/subscriptions", middleware.AdminAuthMiddleware, handler.GetSubscriptions)
-
 
 	trainer := r.Group("/trainer")
 	trainer.POST("/login", handler.TrainerLogin)
@@ -35,7 +32,10 @@ func SetupRouter() *gin.Engine {
 	trainer.DELETE("/delete", middleware.TrainerAuthMiddleware, handler.TrainerDelete)
 	trainer.PUT("/update", middleware.TrainerAuthMiddleware, handler.TrainerUpdate)
 	trainer.GET("/get", middleware.TrainerAuthMiddleware, handler.TrainerGet)
-	trainer.GET("/subscriptions", middleware.TrainerAuthMiddleware, handler.GetSubscriptions)
+	trainer.POST("/class", middleware.TrainerAuthMiddleware, handler.TrainerCreateClass)
+
+	r.GET("/subscriptions", handler.GetSubscriptions)
+	r.GET("/classes", handler.GetClasses)
 
 	return r
 }

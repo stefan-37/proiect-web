@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"backend/repository"
 	"golang.org/x/crypto/bcrypt"
+	"time"
 )
 
 func TrainerSignUp(c *gin.Context, database *gorm.DB) {
@@ -145,4 +146,69 @@ func TrainerGet(c *gin.Context, database *gorm.DB) {
 	}
 
 	c.JSON(http.StatusOK, trainerData)
+}
+
+func TrainerCreateClass(c *gin.Context, database *gorm.DB) {
+
+	trainer, ok := c.Get("trainer")
+
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read trainer",
+		})
+		return
+	}
+
+	trainerData, ok := trainer.(models.Trainer)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read trainer data",
+		})
+		return
+	}
+
+	var body struct {
+		ScheduledAt time.Time `json:"date"`
+		Name        string    `json:"name"`
+		Description string    `json:"description"`
+		TrainerID   uint      `json:"trainer_id"`
+		Capacity    uint      `json:"capacity"`
+		Users       uint	  `json:"users"`
+		AdminID     uint      `json:"admin_id"`
+	}
+
+	if c.BindJSON(&body) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read body",
+		})
+		return
+	}
+
+	body.TrainerID = trainerData.ID
+
+	class, err := models.ClassFactory(
+		models.ClassWithName(body.Name),
+		models.ClassWithDescription(body.Description),
+		models.ClassWithCapacity(body.Capacity),
+		models.ClassWithTrainerID(body.TrainerID),
+		models.ClassWithScheduledAt(body.ScheduledAt),
+		models.ClassWithAdminID(trainerData.AdminID),
+	)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid field(s)"})
+		return
+	}
+
+	if repository.CreateClass(class, database) != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create class",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Class created successfully",
+	})
+
 }

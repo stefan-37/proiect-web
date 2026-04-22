@@ -28,3 +28,7 @@ func UserSubscribe(c *gin.Context) {
 func GetUserSubscriptions(c *gin.Context) {
 	service.GetUserSubscriptions(c, database)
 }
+
+func GetClasses(c *gin.Context) {
+	service.GetClasses(c, database)
+}

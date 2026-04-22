@@ -15,7 +15,7 @@ type Class struct {
 	TrainerID   uint      `json:"trainer_id" gorm:"not null"`
 	Capacity    uint      `json:"capacity" gorm:"not null"`
 	Users       uint	  `json:"users" gorm:"not null"`
-	AdminID     uint      `json:"admin_id" gorm:"not null"`
+	AdminID     uint      `json:"admin_id"`
 }
 
 type ClassOption func(*Class)
@@ -65,9 +65,6 @@ func (c *Class) ClassBuild() error {
 	}
 	if c.Capacity == 0 {
 		return fmt.Errorf("invalid capacity")
-	}
-	if c.AdminID == 0 {
-		return fmt.Errorf("invalid admin_id")
 	}
 	return nil
 }
