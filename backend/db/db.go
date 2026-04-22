@@ -1,9 +1,11 @@
 package db
 
 import (
-  "gorm.io/driver/postgres"
-  "gorm.io/gorm"
-  "sync"
+	"sync"
+	"time"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var instance struct {	
@@ -18,6 +20,15 @@ func GetDB() *gorm.DB {
 			panic("failed to connect database" + err.Error())
 		}
 		instance.DB = db
+
+		sqlDB, err := db.DB()
+		if err != nil {
+			panic(err)
+		}
+		sqlDB.SetMaxOpenConns(20)
+		sqlDB.SetMaxIdleConns(10)
+		sqlDB.SetConnMaxLifetime(5 * time.Minute)
+
 	  })
 	  return instance.DB
 }
