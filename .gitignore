@@ -2,4 +2,4 @@
 *.db
 *.js
 .vscode
-identified_issues.md
+*.md
