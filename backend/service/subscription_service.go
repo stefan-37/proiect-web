@@ -11,13 +11,11 @@ import (
 
 func UserSubscribe(c *gin.Context, database *gorm.DB) {
 
-	user, _ := c.Get("user")
-	userData, ok := user.(models.User)
-	
+	user, ok := c.Get("ID")
 
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to read user data",
+			"error": "Failed to read user ID",
 		})
 		return
 	}
@@ -37,7 +35,7 @@ func UserSubscribe(c *gin.Context, database *gorm.DB) {
 	}
 
 	userSubscription, err := models.UserSubscriptionFactory(
-		models.UserSubscriptionWithUserID(userData.ID),
+		models.UserSubscriptionWithUserID(user.(uint)),
 		models.UserSubscriptionWithSubscriptionID(subscriptionID),
 		models.UserSubscriptionWithStartedAt(time.Now()),
 		models.UserSubscriptionWithExpiresAt(time.Now().AddDate(0, 1, 0)),
@@ -76,5 +74,11 @@ func GetSubscriptions(c *gin.Context, database *gorm.DB) {
 	c.JSON(http.StatusOK, gin.H{
 		"subscriptions": subscriptions,
 	})
+
+}
+
+func CheckSubscriptions(database *gorm.DB) {
+
+	database.Where("expires_at < ?",time.Now()).Delete(&models.UserSubscription{})
 
 }
