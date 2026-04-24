@@ -43,24 +43,16 @@ func TrainerSignUp(c *gin.Context, database *gorm.DB) {
 }
 
 func TrainerDelete(c *gin.Context, database *gorm.DB) {
-	trainer, err := c.Get("trainer")
+	id, ok := c.Get("ID")
 
-	if !err {
+	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read trainer ID",
 		})
 		return
 	}
 
-	trainerData, err := trainer.(models.Trainer)
-	if !err {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to read trainer data",
-		})
-		return
-	}
-
-	if err := repository.DeleteTrainerByID(trainerData.ID, database); err != nil {
+	if err := repository.DeleteTrainerByID(id.(uint), database); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to delete trainer",
 		})
@@ -74,10 +66,10 @@ func TrainerDelete(c *gin.Context, database *gorm.DB) {
 }
 
 func TrainerUpdate(c *gin.Context, database *gorm.DB) {
-	trainer, _ := c.Get("trainer")
-	trainerData, ok := trainer.(models.Trainer)
+	id, _ := c.Get("ID")
+	trainerData, err := repository.GetTrainerByID(id.(uint), database)
 
-	if !ok {
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read trainer data",
 		})
@@ -128,17 +120,17 @@ func TrainerUpdate(c *gin.Context, database *gorm.DB) {
 }
 
 func TrainerGet(c *gin.Context, database *gorm.DB) {
-	trainer, err := c.Get("trainer")
+	id, ok := c.Get("ID")
 
-	if !err {
+	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read trainer ID",
 		})
 		return
 	}
 
-	trainerData, err := trainer.(models.Trainer)
-	if !err {
+	trainerData, err := repository.GetTrainerByID(id.(uint), database)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read trainer data",
 		})
@@ -150,19 +142,11 @@ func TrainerGet(c *gin.Context, database *gorm.DB) {
 
 func TrainerCreateClass(c *gin.Context, database *gorm.DB) {
 
-	trainer, ok := c.Get("trainer")
+	id, ok := c.Get("ID")
 
 	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to read trainer",
-		})
-		return
-	}
-
-	trainerData, ok := trainer.(models.Trainer)
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to read trainer data",
+			"error": "Failed to read trainer ID",
 		})
 		return
 	}
@@ -184,7 +168,15 @@ func TrainerCreateClass(c *gin.Context, database *gorm.DB) {
 		return
 	}
 
-	body.TrainerID = trainerData.ID
+	body.TrainerID = id.(uint)
+
+	trainer, err := repository.GetTrainerByID(id.(uint), database)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read trainer data",
+		})
+		return
+	}
 
 	class, err := models.ClassFactory(
 		models.ClassWithName(body.Name),
@@ -192,7 +184,7 @@ func TrainerCreateClass(c *gin.Context, database *gorm.DB) {
 		models.ClassWithCapacity(body.Capacity),
 		models.ClassWithTrainerID(body.TrainerID),
 		models.ClassWithScheduledAt(body.ScheduledAt),
-		models.ClassWithAdminID(trainerData.AdminID),
+		models.ClassWithAdminID(trainer.AdminID),
 	)
 
 	if err != nil {

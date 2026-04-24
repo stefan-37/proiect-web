@@ -48,7 +48,7 @@ func UserSignUp(c *gin.Context, database *gorm.DB) {
 
 
 func UserDelete(c *gin.Context, database *gorm.DB) {
-	user, err := c.Get("user")
+	id, err := c.Get("ID")
 
 	if !err {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -57,16 +57,7 @@ func UserDelete(c *gin.Context, database *gorm.DB) {
 		return
 	}
 
-	userData, err := user.(models.User)
-
-	if !err {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to read user data",
-		})
-		return
-	}
-
-	if repository.DeleteUserByID(userData.ID, database) != nil{
+	if repository.DeleteUserByID(id.(uint), database) != nil{
 		c.JSON(http.StatusInternalServerError,gin.H{
 			"error":"Failed to delete user",
 		})
@@ -79,10 +70,10 @@ func UserDelete(c *gin.Context, database *gorm.DB) {
 
 func UserUpdate(c *gin.Context, database *gorm.DB) {
 
-	user, _ := c.Get("user")
-	userData, ok := user.(models.User)
+	id, _ := c.Get("ID")
+	userData, err := repository.GetUserByID(id.(uint), database)
 
-	if !ok {
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read user data",
 		})
@@ -134,10 +125,10 @@ func UserUpdate(c *gin.Context, database *gorm.DB) {
 
 func UserGet(c *gin.Context, database *gorm.DB) {
 
-	user, _ := c.Get("user")
-	userData, ok := user.(models.User)
+	id, _ := c.Get("ID")
+	userData, err := repository.GetUserByID(id.(uint), database)
 
-	if !ok {
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read user data",
 		})
@@ -150,17 +141,9 @@ func UserGet(c *gin.Context, database *gorm.DB) {
 
 func GetUserSubscriptions(c *gin.Context, database *gorm.DB) {
 
-	user, _ := c.Get("user")
-	userData, ok := user.(models.User)
+	id, _ := c.Get("ID")
 
-	if !ok {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to read user data",
-		})
-		return
-	}
-
-	subscriptions, err := repository.GetUserSubscriptionByUserID(userData.ID, database)
+	subscriptions, err := repository.GetUserSubscriptionByUserID(id.(uint), database)
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{

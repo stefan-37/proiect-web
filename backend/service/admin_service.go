@@ -47,24 +47,16 @@ func AdminSignUp(c *gin.Context, database *gorm.DB) {
 
 func AdminDelete(c *gin.Context, database *gorm.DB) {
 
-	admin, err := c.Get("admin")
+	id, ok := c.Get("ID")
 
-	if !err {
+	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read admin ID",
 		})
 		return
 	}
 
-	adminData, err := admin.(models.Admin)
-	if !err {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Failed to read admin data",
-		})
-		return
-	}
-
-	if repository.DeleteAdminByID(adminData.ID, database) != nil {
+	if repository.DeleteAdminByID(id.(uint), database) != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to delete admin",
 		})
@@ -78,18 +70,18 @@ func AdminDelete(c *gin.Context, database *gorm.DB) {
 }
 
 func AdminUpdate(c *gin.Context, database *gorm.DB) {
-	admin, err := c.Get("admin")
+	id, ok := c.Get("ID")
 
-	if !err {
+	if !ok {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read admin ID",
 		})
 		return
 	}
 
-	adminData, err := admin.(models.Admin)
+	adminData, err := repository.GetAdminByID(id.(uint), database)
 
-	if !err {
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read admin data",
 		})
@@ -140,10 +132,17 @@ func AdminUpdate(c *gin.Context, database *gorm.DB) {
 }
 
 func AdminGet(c *gin.Context, database *gorm.DB) {
-	admin, _ := c.Get("admin")
-	adminData, ok := admin.(models.Admin)
+	id, ok := c.Get("ID")
 
 	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read admin ID",
+		})
+		return
+	}
+
+	adminData, err := repository.GetAdminByID(id.(uint), database)
+	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to read admin data",
 		})
