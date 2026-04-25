@@ -6,6 +6,7 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/plugin/opentelemetry/tracing"
 )
 
 var instance struct {	
@@ -23,6 +24,10 @@ func GetDB() *gorm.DB {
 			panic("failed to connect database" + err.Error())
 		}
 		instance.DB = db
+
+		if err := db.Use(tracing.NewPlugin()); err != nil {
+			panic(err)
+		}
 
 		sqlDB, err := db.DB()
 		if err != nil {

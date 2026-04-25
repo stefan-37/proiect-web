@@ -2,13 +2,16 @@ package router
 
 import (
 	"backend/handler"
-	"github.com/gin-gonic/gin"
 	"backend/middleware"
+
+	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 )
 
 func SetupRouter() *gin.Engine {
 
 	r := gin.Default()
+	r.Use(otelgin.Middleware("gym-api"))
 
 	user := r.Group("/user")
 	user.POST("/signup",handler.UserSignUp)
