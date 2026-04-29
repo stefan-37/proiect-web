@@ -1,5 +1,5 @@
 .env
 *.db
-*.js
 .vscode
 *.md
+!README.md
