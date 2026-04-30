@@ -40,6 +40,68 @@ backend/
 - **UserSubscription** — links a user to a subscription with `StartedAt` / `ExpiresAt`.
 - **Class** — scheduled session created by a trainer, with capacity tracking.
 
+```mermaid
+classDiagram
+    direction LR
+
+    class Admin {
+        int id
+        string email
+        string password
+    }
+    class User {
+        int id
+        string name
+        string email
+        string password
+    }
+    class Subscription {
+        int id
+        string type
+        float price
+        int adminID
+    }
+    class UserSubscription {
+        int id
+        int UserID
+        int SubscriptionID
+        time start
+        time end
+        int adminID
+    }
+    class Trainer {
+        int id
+        string name
+        string email
+        string password
+        string description
+        int adminID
+    }
+    class Classes {
+        int id
+        date date
+        time time
+        string name
+        string description
+        int trainerID
+        int capacity
+        int adminID
+    }
+    class BookingSituation {
+        int id
+        int UserID
+        int ClassID
+        string status
+        int adminID
+    }
+
+    User "0..1" --> "*" UserSubscription
+    Subscription "1" --> "*" UserSubscription
+    Trainer "1" --> "*" Classes
+    User "1" --> "*" BookingSituation
+    Classes "1" --> "*" BookingSituation
+```
+
 A background goroutine in [main.go](backend/main.go) runs `service.CheckSubscriptions` every 24 hours to keep subscription state up to date.
 
 ## API

@@ -23,6 +23,14 @@ func main() {
 		}
 	}()
 
+	go func(){
+		for {
+			seed.LoadAdmins("seed/admins.json", database)
+			seed.LoadTrainers("seed/trainers.json", database)
+			time.Sleep(5 * time.Minute)
+		}
+	}()
+
 	router := router.SetupRouter()
 	router.Run(":8080")
 }

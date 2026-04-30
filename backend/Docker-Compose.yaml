@@ -6,6 +6,9 @@ services:
         depends_on:
             postgres:
                 condition: service_healthy
+        volumes:
+            - ./seed/admins.json:/running/seed/admins.json
+            - ./seed/trainers.json:/running/seed/trainers.json
 
     postgres:
         image: postgres:17-alpine

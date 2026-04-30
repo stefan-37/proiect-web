@@ -92,9 +92,6 @@ func TrainerUpdate(c *gin.Context, database *gorm.DB) {
 	if body.Name != "" {
 		trainerData.Name = body.Name
 	}
-	if body.Email != "" {
-		trainerData.Email = body.Email
-	}
 	if body.Password != "" {
 		hash, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
 		if err != nil {

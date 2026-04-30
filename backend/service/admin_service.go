@@ -104,9 +104,6 @@ func AdminUpdate(c *gin.Context, database *gorm.DB) {
 	if body.Name != "" {
 		adminData.Name = body.Name
 	}
-	if body.Email != "" {
-		adminData.Email = body.Email
-	}
 	if body.Password != "" {
 		hash, hasherr := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
 		if hasherr != nil {
