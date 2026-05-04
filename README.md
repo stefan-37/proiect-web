@@ -1,3 +1,5 @@
+> This README was written by [Claude](https://claude.ai).
+
 # Gym Management API
 
 A RESTful backend for managing a gym: users, trainers, admins, subscription plans, and classes. Written in Go with the Gin web framework, GORM over PostgreSQL, JWT-based auth, and shipped behind an Nginx reverse proxy via Docker Compose.
@@ -102,7 +104,7 @@ classDiagram
     Classes "1" --> "*" BookingSituation
 ```
 
-A background goroutine in [main.go](backend/main.go) runs `service.CheckSubscriptions` every 24 hours to keep subscription state up to date.
+Two background goroutines run in [main.go](backend/main.go): one calls `service.CheckSubscriptions` every 24 hours to keep subscription state up to date, and one re-seeds admins and trainers from JSON files every 5 minutes.
 
 ## API
 
@@ -131,22 +133,24 @@ All authenticated routes require a JWT cookie (`key`) with a `role` claim matchi
 
 | Method | Path             | Auth  | Description           |
 | ------ | ---------------- | ----- | --------------------- |
-| POST   | `/admin/signup`  | public| Register an admin     |
 | POST   | `/admin/login`   | public| Login                 |
 | GET    | `/admin/get`     | admin | Get current admin     |
 | PUT    | `/admin/update`  | admin | Update current admin  |
 | DELETE | `/admin/delete`  | admin | Delete current admin  |
 
+Admin accounts are seeded from `seed/admins.json` — there is no public signup endpoint.
+
 ### `/trainer`
 
 | Method | Path                | Auth    | Description                  |
 | ------ | ------------------- | ------- | ---------------------------- |
-| POST   | `/trainer/signup`   | public  | Register a trainer           |
 | POST   | `/trainer/login`    | public  | Login                        |
 | GET    | `/trainer/get`      | trainer | Get current trainer          |
 | PUT    | `/trainer/update`   | trainer | Update current trainer       |
 | DELETE | `/trainer/delete`   | trainer | Delete current trainer       |
 | POST   | `/trainer/class`    | trainer | Create a class               |
+
+Trainer accounts are seeded from `seed/trainers.json` — there is no public signup endpoint.
 
 ## Running
 
@@ -161,7 +165,7 @@ docker compose -f Docker-Compose.yaml up --build
 This brings up:
 - `postgres` on `:5432`
 - `backend` (Go API) on internal `:8080`
-- `nginx` on `:80`, proxying to the backend and rate-limiting `/login` endpoints (1000 r/s, burst 10)
+- `nginx` on `:80`, proxying to the backend; all routes are burst-limited (burst 30 nodelay), with a tighter burst (10 nodelay) on `*/login` paths
 
 The API is reachable at `http://localhost/`.
 
@@ -186,6 +190,8 @@ The server listens on `:8080`.
 ## Seeding
 
 On startup, [seed/plans.json](backend/seed/plans.json) is loaded into the `subscriptions` table — two default tiers (Basic / Premium).
+
+A second background goroutine re-seeds [seed/admins.json](backend/seed/admins.json) and [seed/trainers.json](backend/seed/trainers.json) every 5 minutes. This is how admin and trainer accounts are provisioned — both files are bind-mounted into the container via Docker Compose. New entries are inserted idempotently (existing rows by email are never overwritten).
 
 ## Performance
 
@@ -212,5 +218,5 @@ Things to know when reading those numbers:
 - **Login and signup are bcrypt-bound.** [`bcrypt.DefaultCost`](https://pkg.go.dev/golang.org/x/crypto/bcrypt#pkg-constants) = 10, deliberately ~60–100 ms per call. That's protection against offline cracking, not a perf bug. See [repository/user.go](backend/repository/user.go), [repository/admin.go](backend/repository/admin.go), [repository/trainer.go](backend/repository/trainer.go).
 - **At concurrency > cores, bcrypt queues** — mean signup/login latency scales roughly with `(concurrency / CPU_cores) × single_call_cost`.
 - **DB pool** is 20 max-open / 10 idle in [db/db.go](backend/db/db.go). Concurrency above ~20 will queue on non-bcrypt paths.
-- **Nginx rate-limits `/login`** at 10 r/m (burst 10) per IP — see [nginx.conf](backend/nginx.conf). Hammering a single IP past the burst returns 503s.
+- **Nginx burst-limits all routes** (burst 30 nodelay) and applies a tighter burst (10 nodelay) on `*/login` paths — see [nginx.conf](backend/nginx.conf). Both zones currently run at a very high rate ceiling, so the burst caps are what enforce the limit in practice.
 

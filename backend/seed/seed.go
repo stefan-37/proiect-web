@@ -1,10 +1,11 @@
 package seed
 
 import (
-	"backend/models"	
+	"backend/models"
 	"encoding/json"
 	"os"
 
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -47,11 +48,15 @@ func LoadAdmins(path string, database *gorm.DB) error {
 	}
 
 	for _, admin := range admins {
+		hash, herr := bcrypt.GenerateFromPassword([]byte(admin.Password), bcrypt.DefaultCost)
+		if herr != nil {
+			return herr
+		}
 		err := database.Where(map[string]any{"email": admin.Email}).
-    		Attrs(models.Admin{Name: admin.Name, Password: admin.Password}).
-    		FirstOrCreate(&admin)
-			if err.Error != nil {
-    			return err.Error
+			Attrs(models.Admin{Name: admin.Name, Password: string(hash)}).
+			FirstOrCreate(&admin)
+		if err.Error != nil {
+			return err.Error
 		}
 	}
 	return nil
@@ -70,8 +75,12 @@ func LoadTrainers(path string, database *gorm.DB) error {
 		return err
 	}	
 	for _, trainer := range trainers {
+		hash, herr := bcrypt.GenerateFromPassword([]byte(trainer.Password), bcrypt.DefaultCost)
+		if herr != nil {
+			return herr
+		}
 		err := database.Where(map[string]any{"email": trainer.Email}).
-			Attrs(models.Trainer{Name: trainer.Name, Password: trainer.Password, Description: trainer.Description, AdminID: trainer.AdminID}).
+			Attrs(models.Trainer{Name: trainer.Name, Password: string(hash), Description: trainer.Description, AdminID: trainer.AdminID}).
 			FirstOrCreate(&trainer)
 		if err.Error != nil {
 			return err.Error

@@ -11,6 +11,28 @@ const CONCURRENCY = Number(process.argv[3]) || 1;
 const RESOURCES = ['user', 'admin', 'trainer'];
 const STEPS = ['signup', 'login', 'get', 'update', 'delete'];
 
+// Admin and trainer have no signup route — accounts are seeded at startup.
+const SEEDED_ADMIN   = { email: 'admin1@example.com',   password: 'password1' };
+const SEEDED_TRAINER = { email: 'trainer1@example.com', password: 'password1' };
+
+// Intercept every fetch so we can trace any DELETE /admin/delete call.
+// This helps identify unexpected deletion paths without touching production code.
+{
+  const _fetch = globalThis.fetch;
+  globalThis.fetch = async (url, init = {}) => {
+    const method = (init.method || 'GET').toUpperCase();
+    const seededPaths = ['/admin/delete', '/trainer/delete'];
+    if (typeof url === 'string' && seededPaths.some(p => url.endsWith(p)) && method === 'DELETE') {
+      process.stderr.write(
+        `\n[TRACE] DELETE ${url}\n  cookie: ${
+          (init.headers?.cookie ?? '(none)').slice(0, 80)
+        }\n${new Error('callsite').stack}\n\n`
+      );
+    }
+    return _fetch(url, init);
+  };
+}
+
 const samples = {};
 const failures = {};
 for (const r of RESOURCES) {
@@ -67,6 +89,18 @@ function stats(arr) {
 function fmt(n) { return n == null ? '-' : n.toFixed(2).padStart(8); }
 
 async function setupAccount(resource, i) {
+  // Admin: no signup route, login with seeded credentials.
+  if (resource === 'admin') {
+    const login = await timed('admin_login', () =>
+      fetch(`${BASE}/admin/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(SEEDED_ADMIN),
+      }));
+    if (!login.ok) return null;
+    return extractCookie(login.res.headers.get('set-cookie'));
+  }
+
   const email = `perf+${resource}_${Date.now()}_${i}@test.local`;
   const password = 'pw12345';
 
@@ -77,6 +111,9 @@ async function setupAccount(resource, i) {
       body: JSON.stringify({ name: `${resource}${i}`, email, password }),
     }));
   if (!signup.ok) return null;
+
+  // Trainer: no signup route when using seeded accounts; hot loop is covered via pool setup.
+  if (resource === 'trainer') return null;
 
   const login = await timed(`${resource}_login`, () =>
     fetch(`${BASE}/${resource}/login`, {
@@ -110,6 +147,7 @@ async function runPublic() {
 }
 
 async function teardownAccount(resource, cookie) {
+  if (resource === 'admin' || resource === 'trainer') return; // seeded accounts must never be deleted
   await timed(`${resource}_delete`, () =>
     fetch(`${BASE}/${resource}/delete`, {
       method: 'DELETE',
@@ -170,6 +208,28 @@ for (const from of RESOURCES) {
 }
 
 async function signupAndLogin(resource, tag) {
+  // Admin: no signup route, login with seeded credentials.
+  if (resource === 'admin') {
+    const login = await fetch(`${BASE}/admin/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(SEEDED_ADMIN),
+    });
+    if (!login.ok) return null;
+    return extractCookie(login.headers.get('set-cookie'));
+  }
+
+  // Trainer: seeded account, login with fixed credentials.
+  if (resource === 'trainer') {
+    const login = await fetch(`${BASE}/trainer/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(SEEDED_TRAINER),
+    });
+    if (!login.ok) return null;
+    return extractCookie(login.headers.get('set-cookie'));
+  }
+
   const email = `xrole+${resource}_${Date.now()}_${tag}@test.local`;
   const password = 'pw12345';
 
@@ -296,8 +356,9 @@ async function runSubscriptionChecks() {
     record(`${from}_as_user_list_mine`, list.status === 401);
   }
 
-  // Cleanup the fresh accounts.
+  // Cleanup fresh accounts. Skip seeded accounts (admin, trainer).
   for (const r of RESOURCES) {
+    if (r === 'admin' || r === 'trainer') continue;
     const cookie = cookies[r];
     if (!cookie) continue;
     await fetch(`${BASE}/${r}/delete`, { method: 'DELETE', headers: { cookie } });
@@ -372,7 +433,9 @@ async function runClassChecks() {
     recordClass(`${from}_as_trainer_create_class`, res.status === 401);
   }
 
+  // Cleanup fresh accounts. Skip seeded accounts (admin, trainer).
   for (const r of RESOURCES) {
+    if (r === 'admin' || r === 'trainer') continue;
     const cookie = cookies[r];
     if (!cookie) continue;
     await fetch(`${BASE}/${r}/delete`, { method: 'DELETE', headers: { cookie } });
@@ -403,9 +466,22 @@ async function batched(n, concurrency, work) {
   const setupStart = performance.now();
   for (const resource of RESOURCES) {
     pools[resource] = new Array(CONCURRENCY);
-    await batched(CONCURRENCY, CONCURRENCY, async (i) => {
-      pools[resource][i] = await setupAccount(resource, i);
-    });
+    if (resource === 'admin' || resource === 'trainer') {
+      // Seeded singleton accounts: log in once, fill all pool slots with the same cookie.
+      const seeded = resource === 'admin' ? SEEDED_ADMIN : SEEDED_TRAINER;
+      const login = await timed(`${resource}_login`, () =>
+        fetch(`${BASE}/${resource}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(seeded),
+        }));
+      const cookie = login.ok ? extractCookie(login.res.headers.get('set-cookie')) : null;
+      pools[resource].fill(cookie);
+    } else {
+      await batched(CONCURRENCY, CONCURRENCY, async (i) => {
+        pools[resource][i] = await setupAccount(resource, i);
+      });
+    }
   }
   const setupMs = performance.now() - setupStart;
   console.log(`done (${setupMs.toFixed(0)}ms)`);
@@ -425,8 +501,9 @@ async function batched(n, concurrency, work) {
   const wallMs = performance.now() - wallStart;
   console.log('\n');
 
-  // Teardown: delete pooled accounts.
+  // Teardown: delete pooled accounts. Skip seeded accounts (admin, trainer).
   for (const resource of RESOURCES) {
+    if (resource === 'admin' || resource === 'trainer') continue;
     await batched(pools[resource].length, CONCURRENCY, async (i) => {
       const cookie = pools[resource][i];
       if (cookie) await teardownAccount(resource, cookie);

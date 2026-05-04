@@ -27,8 +27,8 @@ func SetupRouter() *gin.Engine {
 	admin.GET("/get", middleware.AuthMiddleware("admin"), handler.AdminGet)
 
 	trainer := r.Group("/trainer")
-	//trainer.POST("/login", handler.TrainerLogin)
-	trainer.POST("/signup", handler.TrainerSignUp)
+	trainer.POST("/login", handler.TrainerLogin)
+	//trainer.POST("/signup", handler.TrainerSignUp)
 	trainer.DELETE("/delete", middleware.AuthMiddleware("trainer"), handler.TrainerDelete)
 	trainer.PUT("/update", middleware.AuthMiddleware("trainer"), handler.TrainerUpdate)
 	trainer.GET("/get", middleware.AuthMiddleware("trainer"), handler.TrainerGet)
