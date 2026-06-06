@@ -21,7 +21,7 @@ backend/
 ├── main.go                # Entry point — auto-migrates models, seeds plans, starts router
 ├── config/                # JWT secret / app config
 ├── db/                    # GORM singleton + connection pool setup
-├── models/                # User, Admin, Trainer, Subscription, UserSubscription, Class
+├── models/                # User, Admin, Trainer, Subscription, UserSubscription, Class, Person
 ├── repository/            # Data-access layer (one file per model)
 ├── service/               # Business logic (auth, user, admin, trainer, subscription, class)
 ├── handler/               # Gin HTTP handlers, thin wrappers over services
@@ -41,6 +41,7 @@ backend/
 - **Subscription** — a plan tier (`Basic`, `Premium`) with a price, owned by an admin.
 - **UserSubscription** — links a user to a subscription with `StartedAt` / `ExpiresAt`.
 - **Class** — scheduled session created by a trainer, with capacity tracking.
+- **Person** — a gym-attendance record; one row per visit, holding the member's id (`PersonID`), a `CheckedIn` timestamp, and a nullable `CheckedOut` timestamp. A row with `CheckedOut = NULL` means the member is currently in the gym.
 
 ```mermaid
 classDiagram
@@ -96,7 +97,14 @@ classDiagram
         string status
         int adminID
     }
+    class Person {
+        int id
+        int PersonID
+        time checkedIn
+        time checkedOut
+    }
 
+    User "1" --> "*" Person
     User "0..1" --> "*" UserSubscription
     Subscription "1" --> "*" UserSubscription
     Trainer "1" --> "*" Classes
@@ -116,6 +124,7 @@ All authenticated routes require a JWT cookie (`key`) with a `role` claim matchi
 | ------ | ---------------- | -------------------------------------- |
 | GET    | `/subscriptions` | List available subscription plans      |
 | GET    | `/classes`       | List scheduled classes                 |
+| GET    | `/personsCount`  | Count members currently checked in     |
 
 ### `/user`
 
@@ -128,6 +137,8 @@ All authenticated routes require a JWT cookie (`key`) with a `role` claim matchi
 | DELETE | `/user/delete`        | user      | Delete current user               |
 | POST   | `/user/subscribe`     | user      | Subscribe to a plan               |
 | GET    | `/user/subscription`  | user      | List the user's subscriptions     |
+| POST   | `/user/checkin`       | user      | Check in to the gym               |
+| POST   | `/user/checkout`      | user      | Check out of the gym              |
 
 ### `/admin`
 
