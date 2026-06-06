@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"backend/repository"
 	"strconv"
+	"time"
 )
 
 func CreateClass(c *gin.Context, database *gorm.DB) {
@@ -46,6 +47,60 @@ func CreateClass(c *gin.Context, database *gorm.DB) {
 		"message": "Class created successfully",
 	})
 
+}
+
+func AdminCreateClass(c *gin.Context, database *gorm.DB) {
+	id, ok := c.Get("ID")
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read admin ID",
+		})
+		return
+	}
+
+	var body struct {
+		ScheduledAt time.Time `json:"date"`
+		Name        string    `json:"name"`
+		Description string    `json:"description"`
+		Capacity    uint      `json:"capacity"`
+	}
+
+	if c.BindJSON(&body) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read body",
+		})
+		return
+	}
+
+	if body.Name == "" || body.Capacity == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid field(s)",
+		})
+		return
+	}
+
+	// Admin-created class has no trainer, so TrainerID stays 0. ClassFactory
+	// would reject TrainerID == 0, so build the struct directly here.
+	class := &models.Class{
+		Name:        body.Name,
+		Description: body.Description,
+		Capacity:    body.Capacity,
+		ScheduledAt: body.ScheduledAt,
+		TrainerID:   0,
+		Users:       0,
+		AdminID:     id.(uint),
+	}
+
+	if repository.CreateClass(class, database) != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create class",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Class created successfully",
+	})
 }
 
 func DeleteClass(c *gin.Context, database *gorm.DB) {

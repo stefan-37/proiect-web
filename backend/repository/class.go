@@ -37,3 +37,5 @@ func DeleteClassByID(id uint, database *gorm.DB) error {
 	}
 	return nil
 }
+
+

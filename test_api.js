@@ -372,6 +372,11 @@ classChecks['create_class_nocookie']         = { pass: 0, fail: 0 };
 classChecks['create_class_bad_body']         = { pass: 0, fail: 0 };
 classChecks['user_as_trainer_create_class']  = { pass: 0, fail: 0 };
 classChecks['admin_as_trainer_create_class'] = { pass: 0, fail: 0 };
+classChecks['admin_create_class']            = { pass: 0, fail: 0 };
+classChecks['admin_create_class_nocookie']   = { pass: 0, fail: 0 };
+classChecks['admin_create_class_bad_body']   = { pass: 0, fail: 0 };
+classChecks['user_as_admin_create_class']    = { pass: 0, fail: 0 };
+classChecks['trainer_as_admin_create_class'] = { pass: 0, fail: 0 };
 
 function recordClass(key, ok) {
   if (ok) classChecks[key].pass++;
@@ -433,6 +438,170 @@ async function runClassChecks() {
     recordClass(`${from}_as_trainer_create_class`, res.status === 401);
   }
 
+  // Admin creates a class (no trainer; TrainerID 0).
+  if (cookies.admin) {
+    const res = await fetch(`${BASE}/admin/class`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', cookie: cookies.admin },
+      body: JSON.stringify({
+        name: 'Admin class test',
+        description: 'automated admin-created class',
+        date: new Date(Date.now() + 86400000).toISOString(),
+        capacity: 10,
+      }),
+    });
+    recordClass('admin_create_class', res.ok);
+
+    // Missing required fields (no name, no capacity) -> 400 expected.
+    const bad = await fetch(`${BASE}/admin/class`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', cookie: cookies.admin },
+      body: JSON.stringify({ description: 'nothing else' }),
+    });
+    recordClass('admin_create_class_bad_body', !bad.ok);
+  }
+
+  // No cookie -> 401.
+  {
+    const res = await fetch(`${BASE}/admin/class`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: 'x', capacity: 1, date: new Date().toISOString() }),
+    });
+    recordClass('admin_create_class_nocookie', res.status === 401);
+  }
+
+  // Cross-role: user/trainer cookies must not reach /admin/class.
+  for (const from of ['user', 'trainer']) {
+    const cookie = cookies[from];
+    if (!cookie) continue;
+    const res = await fetch(`${BASE}/admin/class`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', cookie },
+      body: JSON.stringify({ name: 'x', capacity: 1, date: new Date().toISOString() }),
+    });
+    recordClass(`${from}_as_admin_create_class`, res.status === 401);
+  }
+
+  // Cleanup fresh accounts. Skip seeded accounts (admin, trainer).
+  for (const r of RESOURCES) {
+    if (r === 'admin' || r === 'trainer') continue;
+    const cookie = cookies[r];
+    if (!cookie) continue;
+    await fetch(`${BASE}/${r}/delete`, { method: 'DELETE', headers: { cookie } });
+  }
+}
+
+const bookingChecks = {};
+bookingChecks['user_book_class']      = { pass: 0, fail: 0 };
+bookingChecks['book_class_nocookie']  = { pass: 0, fail: 0 };
+bookingChecks['book_class_bad_class'] = { pass: 0, fail: 0 };
+bookingChecks['book_class_full']      = { pass: 0, fail: 0 };
+bookingChecks['admin_as_user_book']   = { pass: 0, fail: 0 };
+bookingChecks['trainer_as_user_book'] = { pass: 0, fail: 0 };
+
+function recordBooking(key, ok) {
+  if (ok) bookingChecks[key].pass++;
+  else    bookingChecks[key].fail++;
+}
+
+// Highest class ID currently in the DB. The create-class endpoints only return
+// a message, so we read it back from the public /classes list.
+async function newestClassId() {
+  const res = await fetch(`${BASE}/classes`);
+  if (!res.ok) return 0;
+  const classes = await res.json();
+  if (!Array.isArray(classes)) return 0;
+  return classes.reduce((m, c) => Math.max(m, c.ID ?? c.id ?? 0), 0);
+}
+
+async function createClassAsTrainer(trainerCookie, capacity) {
+  await fetch(`${BASE}/trainer/class`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', cookie: trainerCookie },
+    body: JSON.stringify({
+      name: 'Booking test',
+      description: 'class for booking checks',
+      date: new Date(Date.now() + 86400000).toISOString(),
+      capacity,
+    }),
+  });
+  return newestClassId();
+}
+
+async function runBookingChecks() {
+  const cookies = {};
+  for (const r of RESOURCES) cookies[r] = await signupAndLogin(r, 'book');
+
+  // Need a class with room to book.
+  let classId = 0;
+  if (cookies.trainer) classId = await createClassAsTrainer(cookies.trainer, 10);
+
+  // User books an existing class.
+  if (cookies.user && classId) {
+    const res = await fetch(`${BASE}/user/book`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', cookie: cookies.user },
+      body: JSON.stringify({ class_id: classId }),
+    });
+    recordBooking('user_book_class', res.ok);
+  }
+
+  // Non-existent class -> 404 expected.
+  if (cookies.user) {
+    const res = await fetch(`${BASE}/user/book`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', cookie: cookies.user },
+      body: JSON.stringify({ class_id: 999999999 }),
+    });
+    recordBooking('book_class_bad_class', res.status === 404);
+  }
+
+  // No cookie -> 401.
+  {
+    const res = await fetch(`${BASE}/user/book`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ class_id: classId || 1 }),
+    });
+    recordBooking('book_class_nocookie', res.status === 401);
+  }
+
+  // Capacity enforcement: capacity-1 class, two distinct users; the 2nd booking
+  // must be rejected with 409 by the new capacity check.
+  if (cookies.trainer) {
+    const fullId = await createClassAsTrainer(cookies.trainer, 1);
+    const u1 = await signupAndLogin('user', 'bookfull1');
+    const u2 = await signupAndLogin('user', 'bookfull2');
+    if (fullId && u1 && u2) {
+      const first = await fetch(`${BASE}/user/book`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', cookie: u1 },
+        body: JSON.stringify({ class_id: fullId }),
+      });
+      const second = await fetch(`${BASE}/user/book`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', cookie: u2 },
+        body: JSON.stringify({ class_id: fullId }),
+      });
+      recordBooking('book_class_full', first.ok && second.status === 409);
+      await fetch(`${BASE}/user/delete`, { method: 'DELETE', headers: { cookie: u1 } });
+      await fetch(`${BASE}/user/delete`, { method: 'DELETE', headers: { cookie: u2 } });
+    }
+  }
+
+  // Cross-role: admin/trainer cookies must not reach /user/book.
+  for (const from of ['admin', 'trainer']) {
+    const cookie = cookies[from];
+    if (!cookie) continue;
+    const res = await fetch(`${BASE}/user/book`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', cookie },
+      body: JSON.stringify({ class_id: classId || 1 }),
+    });
+    recordBooking(`${from}_as_user_book`, res.status === 401);
+  }
+
   // Cleanup fresh accounts. Skip seeded accounts (admin, trainer).
   for (const r of RESOURCES) {
     if (r === 'admin' || r === 'trainer') continue;
@@ -459,6 +628,7 @@ async function batched(n, concurrency, work) {
   await runCrossRoleChecks();
   await runSubscriptionChecks();
   await runClassChecks();
+  await runBookingChecks();
 
   // Setup: build a pool of `CONCURRENCY` accounts per resource (bcrypt-heavy, not timed as throughput).
   const pools = {};
@@ -599,5 +769,17 @@ async function batched(n, concurrency, work) {
   const classTotal = Object.values(classChecks).reduce((s, r) => s + r.pass + r.fail, 0);
   const classFails = Object.values(classChecks).reduce((s, r) => s + r.fail, 0);
   console.log(`\nClass checks: ${classTotal - classFails}/${classTotal} passed.`);
+
+  console.log('\nBooking checks:');
+  const bookingHeader = 'check                              pass    fail';
+  console.log(bookingHeader);
+  console.log('-'.repeat(bookingHeader.length));
+  for (const key of Object.keys(bookingChecks)) {
+    const r = bookingChecks[key];
+    console.log(`${key.padEnd(33)} ${String(r.pass).padStart(6)} ${String(r.fail).padStart(7)}`);
+  }
+  const bookingTotal = Object.values(bookingChecks).reduce((s, r) => s + r.pass + r.fail, 0);
+  const bookingFails = Object.values(bookingChecks).reduce((s, r) => s + r.fail, 0);
+  console.log(`\nBooking checks: ${bookingTotal - bookingFails}/${bookingTotal} passed.`);
 })();
 

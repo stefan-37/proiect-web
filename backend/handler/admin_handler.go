@@ -20,3 +20,7 @@ func AdminUpdate(c *gin.Context) {
 func AdminGet(c *gin.Context) {
 	service.AdminGet(c, database)
 }
+
+func AdminCreateClass(c *gin.Context) {
+	service.AdminCreateClass(c, database)
+}

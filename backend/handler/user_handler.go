@@ -32,3 +32,7 @@ func GetUserSubscriptions(c *gin.Context) {
 func GetClasses(c *gin.Context) {
 	service.GetClasses(c, database)
 }
+
+func BookClass(c *gin.Context) {
+	service.BookClass(c, database)
+}

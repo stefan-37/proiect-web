@@ -40,7 +40,8 @@ backend/
 - **Trainer** — created under an admin; can create classes.
 - **Subscription** — a plan tier (`Basic`, `Premium`) with a price, owned by an admin.
 - **UserSubscription** — links a user to a subscription with `StartedAt` / `ExpiresAt`.
-- **Class** — scheduled session created by a trainer, with capacity tracking.
+- **Class** — scheduled session created by a trainer. Tracks `Capacity` and a live `Users` count; bookings are rejected once `Users` reaches `Capacity`.
+- **BookingSituation** — links a user to a class they booked. Created via `/user/book`, which checks the class's remaining capacity and increments the class's `Users` count atomically (the class row is locked for the duration so concurrent bookings can't overbook).
 - **Person** — a gym-attendance record; one row per visit, holding the member's id (`PersonID`), a `CheckedIn` timestamp, and a nullable `CheckedOut` timestamp. A row with `CheckedOut = NULL` means the member is currently in the gym.
 
 ```mermaid
@@ -139,6 +140,7 @@ All authenticated routes require a JWT cookie (`key`) with a `role` claim matchi
 | GET    | `/user/subscription`  | user      | List the user's subscriptions     |
 | POST   | `/user/checkin`       | user      | Check in to the gym               |
 | POST   | `/user/checkout`      | user      | Check out of the gym              |
+| POST   | `/user/book`          | user      | Book a class (capacity-enforced)  |
 
 ### `/admin`
 
@@ -148,6 +150,7 @@ All authenticated routes require a JWT cookie (`key`) with a `role` claim matchi
 | GET    | `/admin/get`     | admin | Get current admin     |
 | PUT    | `/admin/update`  | admin | Update current admin  |
 | DELETE | `/admin/delete`  | admin | Delete current admin  |
+| POST   | `/admin/class`   | admin | Create a class (no trainer; `TrainerID` 0) |
 
 Admin accounts are seeded from `seed/admins.json` — there is no public signup endpoint.
 

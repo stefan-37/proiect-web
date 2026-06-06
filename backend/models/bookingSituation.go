@@ -16,8 +16,7 @@ type BookingSituation struct {
 	gorm.Model
 	UserId  uint   `json:"user_id" gorm:"not null"`
 	ClassID uint   `json:"class_id" gorm:"not null"`
-	AdminID uint   `json:"admin_id" gorm:"not null"`
-	Status  status `json:"status" gorm:"not null"`
+	AdminID uint   `json:"admin_id"`
 }
 
 type BookingSituationOptions func(*BookingSituation)
@@ -40,11 +39,11 @@ func BookingSituationWithAdminID(adminID uint) BookingSituationOptions{
 	}
 }
 
-func BookingSituationWithStatus(status status) BookingSituationOptions {
-	return func(bs *BookingSituation) {
-		bs.Status = status
-	}	
-}
+// func BookingSituationWithStatus(status status) BookingSituationOptions {
+// 	return func(bs *BookingSituation) {
+// 		bs.Status = status
+// 	}	
+// }
 
 func (bs *BookingSituation) BookingSituationBuild() error {
 	if bs.UserId == 0 {

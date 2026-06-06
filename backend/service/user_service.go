@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"gorm.io/gorm"
 	"net/http"
 	"backend/models"
@@ -154,4 +155,57 @@ func GetUserSubscriptions(c *gin.Context, database *gorm.DB) {
 
 	c.JSON(http.StatusOK, subscriptions)
 
+}
+
+func BookClass(c *gin.Context, database *gorm.DB) {
+	id, _ := c.Get("ID")
+
+	var body struct {
+		ClassID uint `json:"class_id"`
+	}
+
+	if c.BindJSON(&body) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read body",
+		})
+		return
+	}
+
+	class, err := repository.GetClassByID(body.ClassID, database)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Class not found",
+		})
+		return
+	}
+
+	bookingSituation, err := models.BookingSituationFactory(
+		models.BookingSituationWithUserID(id.(uint)),
+		models.BookingSituationWithClassID(body.ClassID),
+		models.BookingSituationWithAdminID(class.AdminID),
+	)
+
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to create booking situation",
+		})
+		return
+	}
+
+	if err := repository.BookClass(bookingSituation, database); err != nil {
+		if errors.Is(err, repository.ErrClassFull) {
+			c.JSON(http.StatusConflict, gin.H{
+				"error": "Class is full",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to book class",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Class booked successfully",
+	})
 }

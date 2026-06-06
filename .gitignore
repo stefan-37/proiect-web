@@ -3,3 +3,4 @@
 .vscode
 *.md
 !README.md
+seed_mock_data.js
