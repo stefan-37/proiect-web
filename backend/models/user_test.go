@@ -7,6 +7,7 @@ func TestUserFactory_ValidUser(t *testing.T) {
 		UserWithName("Alice"),
 		UserWithEmail("alice@example.com"),
 		UserWithPassword("secret"),
+		UserWithPhone("0712345678"),
 	)
 
 	if err != nil {
@@ -27,6 +28,7 @@ func TestUserFactory_EmptyName(t *testing.T) {
 	_, err := UserFactory(
 		UserWithEmail("alice@example.com"),
 		UserWithPassword("secret"),
+		UserWithPhone("0712345678"),
 	)
 
 	if err == nil {
@@ -38,6 +40,7 @@ func TestUserFactory_EmptyEmail(t *testing.T) {
 	_, err := UserFactory(
 		UserWithName("Alice"),
 		UserWithPassword("secret"),
+		UserWithPhone("0712345678"),
 	)
 
 	if err == nil {
@@ -49,10 +52,23 @@ func TestUserFactory_EmptyPassword(t *testing.T) {
 	_, err := UserFactory(
 		UserWithName("Alice"),
 		UserWithEmail("alice@example.com"),
+		UserWithPhone("0712345678"),
 	)
 
 	if err == nil {
 		t.Fatal("expected error for empty password, got nil")
+	}
+}
+
+func TestUserFactory_EmptyPhone(t *testing.T) {
+	_, err := UserFactory(
+		UserWithName("Alice"),
+		UserWithEmail("alice@example.com"),
+		UserWithPassword("secret"),
+	)
+
+	if err == nil {
+		t.Fatal("expected error for empty phone, got nil")
 	}
 }
 

@@ -11,6 +11,7 @@ A RESTful backend for managing a gym: users, trainers, admins, subscription plan
 - **ORM:** [GORM](https://gorm.io/) with the PostgreSQL driver
 - **Database:** PostgreSQL 17 (alpine)
 - **Auth:** JWT (`github.com/golang-jwt/jwt/v5`) stored in an HTTP cookie named `key`
+- **Email:** SMTP via `net/smtp` (Gmail) — a notification email is sent on user signup
 - **Reverse proxy:** Nginx (with rate-limited `/login` endpoints)
 - **Containerization:** Docker + Docker Compose, multi-stage build on `distroless` base
 
@@ -23,7 +24,7 @@ backend/
 ├── db/                    # GORM singleton + connection pool setup
 ├── models/                # User, Admin, Trainer, Subscription, UserSubscription, Class, Person
 ├── repository/            # Data-access layer (one file per model)
-├── service/               # Business logic (auth, user, admin, trainer, subscription, class)
+├── service/               # Business logic (auth, user, admin, trainer, subscription, class, mail)
 ├── handler/               # Gin HTTP handlers, thin wrappers over services
 ├── middleware/            # JWT auth middleware (role-aware)
 ├── router/                # Route definitions
@@ -35,7 +36,7 @@ backend/
 
 ## Domain Model
 
-- **User** — gym member; can subscribe to a plan.
+- **User** — gym member; can subscribe to a plan. Signup requires `name`, `email`, `password`, and `phone` (all non-empty).
 - **Admin** — manages trainers and subscription plans.
 - **Trainer** — created under an admin; can create classes.
 - **Subscription** — a plan tier (`Basic`, `Premium`) with a price, owned by an admin.
@@ -58,6 +59,7 @@ classDiagram
         string name
         string email
         string password
+        string phone
     }
     class Subscription {
         int id
@@ -131,8 +133,9 @@ All authenticated routes require a JWT cookie (`key`) with a `role` claim matchi
 
 | Method | Path                  | Auth      | Description                       |
 | ------ | --------------------- | --------- | --------------------------------- |
-| POST   | `/user/signup`        | public    | Register a new user               |
+| POST   | `/user/signup`        | public    | Register a new user (sends a notification email) |
 | POST   | `/user/login`         | public    | Login, sets JWT cookie            |
+| POST   | `/user/logout`        | user      | Logout, clears the JWT cookie     |
 | GET    | `/user/get`           | user      | Get current user                  |
 | PUT    | `/user/update`        | user      | Update current user               |
 | DELETE | `/user/delete`        | user      | Delete current user               |

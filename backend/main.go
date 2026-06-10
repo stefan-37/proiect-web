@@ -12,7 +12,7 @@ import (
 
 func main() {
 	database := db.GetDB()
-	database.AutoMigrate(&models.User{}, &models.Admin{}, &models.Trainer{}, &models.Subscription{}, &models.UserSubscription{}, &models.Class{}, &models.BookingSituation{})
+	database.AutoMigrate(&models.User{}, &models.Admin{}, &models.Trainer{}, &models.Subscription{}, &models.UserSubscription{}, &models.Class{}, &models.BookingSituation{}, &models.Person{})
 	seed.LoadPlans("seed/plans.json", database)
 
 	go func() {

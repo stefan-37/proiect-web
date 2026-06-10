@@ -24,6 +24,7 @@ func UserSignUp(c *gin.Context, database *gorm.DB) {
 		models.UserWithName(body.Name),
 		models.UserWithEmail(body.Email),
 		models.UserWithPassword(body.Password),
+		models.UserWithPhone(body.Phone),
 	)
 
 	if err != nil {
@@ -40,6 +41,8 @@ func UserSignUp(c *gin.Context, database *gorm.DB) {
 		})
 		return
 	}
+
+	sendEmail(user.Email)
 
 	c.JSON(http.StatusOK,gin.H{
 		"message":"User created successfully",
@@ -85,6 +88,7 @@ func UserUpdate(c *gin.Context, database *gorm.DB) {
 		Name     string `json:"name"`
 		Email    string `json:"email"`
 		Password string `json:"password"`
+		Phone    string `json:"phone"`
 	}
 
 	if c.BindJSON(&body) != nil {
@@ -109,6 +113,9 @@ func UserUpdate(c *gin.Context, database *gorm.DB) {
 			return
 		}
 		userData.Password = string(hash)
+	}
+	if body.Phone != "" {
+		userData.Phone = body.Phone
 	}
 
 	if repository.UpdateUser(&userData, database) != nil{
@@ -145,6 +152,11 @@ func GetUserSubscriptions(c *gin.Context, database *gorm.DB) {
 	id, _ := c.Get("ID")
 
 	subscriptions, err := repository.GetUserSubscriptionByUserID(id.(uint), database)
+
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.JSON(http.StatusOK, nil)
+		return
+	}
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -208,4 +220,14 @@ func BookClass(c *gin.Context, database *gorm.DB) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Class booked successfully",
 	})
+}
+
+func UserLogout(c *gin.Context) {
+	 	c.SetSameSite(http.SameSiteNoneMode)
+        
+        c.SetCookie("key", "", -1, "", "", true, true)
+
+        c.JSON(http.StatusOK, gin.H{
+                "message": "Logout successful",
+        })
 }

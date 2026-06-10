@@ -10,12 +10,32 @@ func SetupRouter() *gin.Engine {
 
 	r := gin.Default()
 
+	// CORS: let the frontend origins call the API with credentials (the auth cookie).
+	// Explicit origins only — "*" is not allowed together with credentials.
+	r.Use(func(c *gin.Context) {
+		origin := c.GetHeader("Origin")
+		switch origin {
+		case "http://localhost:5500", "http://127.0.0.1:5500":
+			c.Header("Access-Control-Allow-Origin", origin)
+			c.Header("Access-Control-Allow-Credentials", "true")
+			c.Header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+			c.Header("Access-Control-Allow-Headers", "Content-Type")
+			c.Header("Vary", "Origin")
+		}
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+		c.Next()
+	})
+
 	user := r.Group("/user")
 	user.POST("/signup",handler.UserSignUp)
 	user.POST("/login", handler.UserLogin)
 	user.DELETE("/delete", middleware.AuthMiddleware("user"), handler.UserDelete)
 	user.PUT("/update", middleware.AuthMiddleware("user"), handler.UserUpdate)
 	user.GET("/get", middleware.AuthMiddleware("user"), handler.UserGet)
+	user.POST("/logout", middleware.AuthMiddleware("user"), handler.UserLogout)
 	user.POST("/subscribe", middleware.AuthMiddleware("user"), handler.UserSubscribe)
 	user.GET("/subscription", middleware.AuthMiddleware("user"), handler.GetUserSubscriptions)
 	user.POST("/checkin", middleware.AuthMiddleware("user"), handler.CheckIn)

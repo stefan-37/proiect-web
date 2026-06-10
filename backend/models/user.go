@@ -11,6 +11,7 @@ type User struct {
 	Name     string `json:"name" gorm:"not null"`
 	Email    string `json:"email" gorm:"unique not null"`
 	Password string `json:"password" gorm:"not null"`
+	Phone    string `json:"phone" gorm:"not null"`
 }
 
 type UserOption func(*User)
@@ -33,6 +34,12 @@ func UserWithPassword(password string) UserOption {
 	}
 }
 
+func UserWithPhone(phone string) UserOption {
+	return func(u *User) {
+		u.Phone = phone
+	}
+}
+
 func (u *User) UserBuild() error {
 	if u.Name == "" {
 		return fmt.Errorf("invalid name")
@@ -42,6 +49,9 @@ func (u *User) UserBuild() error {
 	}
 	if u.Password == "" {
 		return fmt.Errorf("invalid password")
+	}
+	if u.Phone == "" {
+		return fmt.Errorf("invalid phone")
 	}
 	return nil
 }

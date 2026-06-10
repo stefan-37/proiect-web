@@ -58,8 +58,8 @@ func UserLogin(c *gin.Context, database *gorm.DB) {
 		return
 	}
 
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("key", tokenString, 3600*24*7, "", "", false, true)
+	c.SetSameSite(http.SameSiteNoneMode)
+	c.SetCookie("key", tokenString, 3600*24*7, "", "", true, true)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
@@ -113,8 +113,8 @@ func AdminLogin(c *gin.Context, database *gorm.DB) {
 		return
 	}
 
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("key", tokenString, 3600*24*7, "", "", false, true)
+	c.SetSameSite(http.SameSiteNoneMode)
+	c.SetCookie("key", tokenString, 3600*24*7, "", "", true, true)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
@@ -168,8 +168,8 @@ func TrainerLogin(c *gin.Context, database *gorm.DB) {
 		return
 	}
 
-	c.SetSameSite(http.SameSiteLaxMode)
-	c.SetCookie("key", tokenString, 3600*24*7, "", "", false, true)
+	c.SetSameSite(http.SameSiteNoneMode)
+	c.SetCookie("key", tokenString, 3600*24*7, "", "", true, true)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",

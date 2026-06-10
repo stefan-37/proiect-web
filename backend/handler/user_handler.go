@@ -36,3 +36,7 @@ func GetClasses(c *gin.Context) {
 func BookClass(c *gin.Context) {
 	service.BookClass(c, database)
 }
+
+func UserLogout(c *gin.Context) {
+	service.UserLogout(c)
+}

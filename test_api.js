@@ -108,7 +108,7 @@ async function setupAccount(resource, i) {
     fetch(`${BASE}/${resource}/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: `${resource}${i}`, email, password }),
+      body: JSON.stringify({ name: `${resource}${i}`, email, password, phone: '0712345678' }),
     }));
   if (!signup.ok) return null;
 
@@ -236,7 +236,7 @@ async function signupAndLogin(resource, tag) {
   const signup = await fetch(`${BASE}/${resource}/signup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: `${resource}-xrole`, email, password }),
+    body: JSON.stringify({ name: `${resource}-xrole`, email, password, phone: '0712345678' }),
   });
   if (!signup.ok) return null;
 
