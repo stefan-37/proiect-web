@@ -52,9 +52,6 @@ func (bs *BookingSituation) BookingSituationBuild() error {
 	if bs.ClassID == 0 {
 		return fmt.Errorf("invalid class id")
 	}
-	if bs.AdminID == 0 {
-		return fmt.Errorf("invalid admin id")
-	}
 	return nil
 }
 

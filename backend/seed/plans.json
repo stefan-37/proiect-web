@@ -1,4 +1,4 @@
 [
-  {"type": "Basic", "price": 9.99, "AdminID": 0},
-  {"type": "Premium", "price": 29.99, "AdminID": 0}
+  {"type": "Basic", "price": 149.99, "AdminID": 0},
+  {"type": "Premium", "price": 229.99, "AdminID": 0}
 ]

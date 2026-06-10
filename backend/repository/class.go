@@ -38,4 +38,13 @@ func DeleteClassByID(id uint, database *gorm.DB) error {
 	return nil
 }
 
+func GetAllClasses(database *gorm.DB) ([]models.Class, error) {
+	var classes []models.Class
+	err := database.Find(&classes)
+	if err.Error != nil {
+		return nil, err.Error
+	}
+	return classes, nil
+}
+
 

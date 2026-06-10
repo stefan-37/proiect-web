@@ -27,6 +27,7 @@ func CreateClass(c *gin.Context, database *gorm.DB) {
 		models.ClassWithAdminID(body.AdminID),
 		models.ClassWithScheduledAt(body.ScheduledAt),
 		models.ClassWithTrainerID(body.TrainerID),
+		models.ClassWithPrice(body.Price),
 	)
 
 	if err != nil {
@@ -63,6 +64,7 @@ func AdminCreateClass(c *gin.Context, database *gorm.DB) {
 		Name        string    `json:"name"`
 		Description string    `json:"description"`
 		Capacity    uint      `json:"capacity"`
+		Price       float64   `json:"price"`
 	}
 
 	if c.BindJSON(&body) != nil {
@@ -72,15 +74,13 @@ func AdminCreateClass(c *gin.Context, database *gorm.DB) {
 		return
 	}
 
-	if body.Name == "" || body.Capacity == 0 {
+	if body.Name == "" || body.Capacity == 0 || body.Price == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid field(s)",
 		})
 		return
 	}
 
-	// Admin-created class has no trainer, so TrainerID stays 0. ClassFactory
-	// would reject TrainerID == 0, so build the struct directly here.
 	class := &models.Class{
 		Name:        body.Name,
 		Description: body.Description,
@@ -89,6 +89,7 @@ func AdminCreateClass(c *gin.Context, database *gorm.DB) {
 		TrainerID:   0,
 		Users:       0,
 		AdminID:     id.(uint),
+		Price:       body.Price,
 	}
 
 	if repository.CreateClass(class, database) != nil {

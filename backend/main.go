@@ -27,6 +27,7 @@ func main() {
 		for {
 			seed.LoadAdmins("seed/admins.json", database)
 			seed.LoadTrainers("seed/trainers.json", database)
+			seed.LoadClasses("seed/classes.json", database)
 			time.Sleep(5 * time.Minute)
 		}
 	}()

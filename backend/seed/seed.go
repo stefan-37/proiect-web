@@ -87,4 +87,28 @@ func LoadTrainers(path string, database *gorm.DB) error {
 		}	
 	}
 	return nil
-}	
+}
+
+func LoadClasses(path string, database *gorm.DB) error {
+	file, err := os.Open(path)
+	if err != nil {
+		return err	
+	}
+	defer file.Close()
+
+	var classes []models.Class
+	err = json.NewDecoder(file).Decode(&classes)
+	if err != nil {
+		return err
+	}
+
+	for _, class := range classes {
+		err := database.Where(map[string]any{"name": class.Name}).
+			Attrs(models.Class{ScheduledAt: class.ScheduledAt, Description: class.Description, TrainerID: class.TrainerID, Capacity: class.Capacity, Users: class.Users, AdminID: class.AdminID}).
+			FirstOrCreate(&class)
+		if err.Error != nil {
+			return err.Error
+		}
+	}
+	return nil
+}

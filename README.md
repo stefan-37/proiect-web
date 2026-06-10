@@ -148,6 +148,7 @@ All authenticated routes require a JWT cookie (`key`) with a `role` claim matchi
 | POST   | `/user/book`          | user      | Book a class (capacity-enforced)  |
 | GET    | `/user/reservations`  | user      | List the user's class reservations |
 | DELETE | `/user/reservation`   | user      | Cancel a class reservation (frees the slot) |
+| GET    | `/user/payments`      | user      | Payment history: returns `{ payments, subscriptions, classes, reservations }` — the user's purchases and reservations plus the full plan and class lists so the client can resolve `subscription_id`/`class_id` to a type/price/name |
 
 ### `/admin`
 

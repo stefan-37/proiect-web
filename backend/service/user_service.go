@@ -1,14 +1,15 @@
 package service
 
 import (
-	"errors"
-	"gorm.io/gorm"
-	"net/http"
 	"backend/models"
-	"github.com/gin-gonic/gin"
 	"backend/repository"
-	"golang.org/x/crypto/bcrypt"
 	"crypto/rand"
+	"errors"
+	"net/http"
+
+	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 func UserSignUp(c *gin.Context, database *gorm.DB) {
@@ -385,5 +386,48 @@ func ForgotPassword(c *gin.Context, database *gorm.DB) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Password reset successfully",
+	})
+}
+
+func GetUserPayments(c *gin.Context, database *gorm.DB) {
+	id, _ := c.Get("ID")
+
+	payments, err := repository.GetPaymentsByUserID(id.(uint), database)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get payments",
+		})
+		return
+	}
+
+	subscriptions, err := repository.GetAllSubscriptions(database)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get subscriptions",
+		})
+		return
+	}
+
+	classes, err := repository.GetAllClasses(database)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get classes",
+		})
+		return
+	}
+
+	reservations, err := repository.GetReservationsByUserID(id.(uint), database)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get reservations",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"payments":      payments,
+		"subscriptions": subscriptions,
+		"classes":       classes,
+		"reservations":  reservations,
 	})
 }

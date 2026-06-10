@@ -12,9 +12,10 @@ type Class struct {
 	ScheduledAt time.Time `json:"date" gorm:"not null"`
 	Name        string    `json:"name" gorm:"not null"`
 	Description string    `json:"description"`
+	Price       float64   `json:"price" gorm:"not null"`
 	TrainerID   uint      `json:"trainer_id" gorm:"not null"`
 	Capacity    uint      `json:"capacity" gorm:"not null"`
-	Users       uint	  `json:"users" gorm:"not null"`
+	Users       uint      `json:"users" gorm:"not null"`
 	AdminID     uint      `json:"admin_id"`
 }
 
@@ -56,6 +57,12 @@ func ClassWithAdminID(adminID uint) ClassOption {
 	}
 }
 
+func ClassWithPrice(price float64) ClassOption {
+	return func(c *Class) {
+		c.Price = price
+	}
+}
+
 func (c *Class) ClassBuild() error {
 	if c.Name == "" {
 		return fmt.Errorf("invalid name")
@@ -65,6 +72,9 @@ func (c *Class) ClassBuild() error {
 	}
 	if c.Capacity == 0 {
 		return fmt.Errorf("invalid capacity")
+	}
+	if c.Price == 0 {
+		return fmt.Errorf("invalid price")
 	}
 	return nil
 }

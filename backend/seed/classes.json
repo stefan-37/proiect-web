@@ -1,0 +1,32 @@
+[
+    {
+        "date": "2024-06-01T12:00:00Z",
+        "name": "Sample Class",
+        "description": "This is a sample class description.",
+        "trainer_id": 1,
+        "capacity": 20,
+        "users": 5,
+        "admin_id": 1,
+        "price": 19.99
+    },
+    {
+        "date": "2024-06-02T14:00:00Z",
+        "name": "Yoga Class",
+        "description": "A relaxing yoga session.",
+        "trainer_id": 2,
+        "capacity": 15,
+        "users": 10,
+        "admin_id": 1,
+        "price": 14.99
+    },
+    {
+        "date": "2024-06-03T16:00:00Z",
+        "name": "HIIT Workout",
+        "description": "High-intensity interval training.",
+        "trainer_id": 3,
+        "capacity": 25,
+        "users": 20,
+        "admin_id": 1,
+        "price": 24.99
+    }
+]

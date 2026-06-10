@@ -56,3 +56,7 @@ func DeleteReservation(c *gin.Context) {
 func ForgotPassword(c *gin.Context) {
 	service.ForgotPassword(c, database)
 }
+
+func GetUserPayments(c *gin.Context) {
+	service.GetUserPayments(c, database)
+}
