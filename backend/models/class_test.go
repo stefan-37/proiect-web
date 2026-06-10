@@ -10,6 +10,7 @@ func TestClassFactory_ValidClass(t *testing.T) {
 		ClassWithName("Yoga"),
 		ClassWithTrainerID(1),
 		ClassWithCapacity(20),
+		ClassWithPrice(50),
 		ClassWithAdminID(1),
 		ClassWithScheduledAt(time.Now().Add(24*time.Hour)),
 		ClassWithDescription("Morning yoga session"),
@@ -17,6 +18,9 @@ func TestClassFactory_ValidClass(t *testing.T) {
 
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
+	}
+	if class.Price != 50 {
+		t.Errorf("expected price 50, got %v", class.Price)
 	}
 	if class.Name != "Yoga" {
 		t.Errorf("expected name 'Yoga', got '%s'", class.Name)
@@ -70,6 +74,7 @@ func TestClassFactory_UsersDefaultsToZero(t *testing.T) {
 		ClassWithName("Pilates"),
 		ClassWithTrainerID(2),
 		ClassWithCapacity(15),
+		ClassWithPrice(40),
 	)
 
 	if err != nil {
