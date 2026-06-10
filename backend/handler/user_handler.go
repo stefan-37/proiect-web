@@ -40,3 +40,19 @@ func BookClass(c *gin.Context) {
 func UserLogout(c *gin.Context) {
 	service.UserLogout(c)
 }
+
+func UserResetPassword(c *gin.Context) {
+	service.UserResetPassword(c, database)
+}
+
+func GetReservations(c *gin.Context) {
+	service.GetReservations(c, database)
+}
+
+func DeleteReservation(c *gin.Context) {
+	service.DeleteReservation(c, database)
+}
+
+func ForgotPassword(c *gin.Context) {
+	service.ForgotPassword(c, database)
+}

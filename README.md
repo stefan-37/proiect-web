@@ -11,7 +11,7 @@ A RESTful backend for managing a gym: users, trainers, admins, subscription plan
 - **ORM:** [GORM](https://gorm.io/) with the PostgreSQL driver
 - **Database:** PostgreSQL 17 (alpine)
 - **Auth:** JWT (`github.com/golang-jwt/jwt/v5`) stored in an HTTP cookie named `key`
-- **Email:** SMTP via `net/smtp` (Gmail) — a notification email is sent on user signup
+- **Email:** SMTP via `net/smtp` (Gmail) — sends a notification email on user signup and the new password on password reset (requires `EMAIL` / `EMAIL_PASSWORD` env vars; no-ops if unset)
 - **Reverse proxy:** Nginx (with rate-limited `/login` endpoints)
 - **Containerization:** Docker + Docker Compose, multi-stage build on `distroless` base
 
@@ -42,7 +42,7 @@ backend/
 - **Subscription** — a plan tier (`Basic`, `Premium`) with a price, owned by an admin.
 - **UserSubscription** — links a user to a subscription with `StartedAt` / `ExpiresAt`.
 - **Class** — scheduled session created by a trainer. Tracks `Capacity` and a live `Users` count; bookings are rejected once `Users` reaches `Capacity`.
-- **BookingSituation** — links a user to a class they booked. Created via `/user/book`, which checks the class's remaining capacity and increments the class's `Users` count atomically (the class row is locked for the duration so concurrent bookings can't overbook).
+- **BookingSituation** — links a user to a class they booked. Created via `/user/book`, which checks the class's remaining capacity and increments the class's `Users` count atomically (the class row is locked for the duration so concurrent bookings can't overbook). Listed via `/user/reservations` and cancelled via `/user/reservation`, which deletes the booking and decrements the class's `Users` count in the same locked transaction so the freed slot becomes bookable again.
 - **Person** — a gym-attendance record; one row per visit, holding the member's id (`PersonID`), a `CheckedIn` timestamp, and a nullable `CheckedOut` timestamp. A row with `CheckedOut = NULL` means the member is currently in the gym.
 
 ```mermaid
@@ -128,6 +128,7 @@ All authenticated routes require a JWT cookie (`key`) with a `role` claim matchi
 | GET    | `/subscriptions` | List available subscription plans      |
 | GET    | `/classes`       | List scheduled classes                 |
 | GET    | `/personsCount`  | Count members currently checked in     |
+| POST   | `/forgot-password` | Reset a user's password by email — generates a new random password, emails it, and stores its hash (no auth required) |
 
 ### `/user`
 
@@ -138,12 +139,15 @@ All authenticated routes require a JWT cookie (`key`) with a `role` claim matchi
 | POST   | `/user/logout`        | user      | Logout, clears the JWT cookie     |
 | GET    | `/user/get`           | user      | Get current user                  |
 | PUT    | `/user/update`        | user      | Update current user               |
+| POST   | `/user/reset-password`| user      | Reset current user's password — generates a new random password, emails it, and stores its hash |
 | DELETE | `/user/delete`        | user      | Delete current user               |
 | POST   | `/user/subscribe`     | user      | Subscribe to a plan               |
 | GET    | `/user/subscription`  | user      | List the user's subscriptions     |
 | POST   | `/user/checkin`       | user      | Check in to the gym               |
 | POST   | `/user/checkout`      | user      | Check out of the gym              |
 | POST   | `/user/book`          | user      | Book a class (capacity-enforced)  |
+| GET    | `/user/reservations`  | user      | List the user's class reservations |
+| DELETE | `/user/reservation`   | user      | Cancel a class reservation (frees the slot) |
 
 ### `/admin`
 

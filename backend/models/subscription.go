@@ -5,23 +5,16 @@ import (
 	"gorm.io/gorm"
 )
 
-type SubscriptionType uint
-
-const (
-	Basic SubscriptionType = iota
-	Premium
-)
-
 type Subscription struct {
 	gorm.Model
-	Type    SubscriptionType `json:"type" gorm:"not null"`
+	Type    string           `json:"type" gorm:"not null"`
 	Price   float64          `json:"price" gorm:"not null"`
 	AdminID uint             `json:"admin_id" gorm:"not null"`
 }
 
 type SubscriptionOption func(*Subscription)
 
-func SubscriptionWithType(subscriptionType SubscriptionType) SubscriptionOption{
+func SubscriptionWithType(subscriptionType string) SubscriptionOption{
 	return func(s *Subscription) {
 		s.Type = subscriptionType
 	}

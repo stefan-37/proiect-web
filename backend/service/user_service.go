@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"backend/repository"
 	"golang.org/x/crypto/bcrypt"
+	"crypto/rand"
 )
 
 func UserSignUp(c *gin.Context, database *gorm.DB) {
@@ -230,4 +231,159 @@ func UserLogout(c *gin.Context) {
         c.JSON(http.StatusOK, gin.H{
                 "message": "Logout successful",
         })
+}
+
+func UserResetPassword(c *gin.Context, database *gorm.DB) {
+	id, _ := c.Get("ID")
+
+	userData, err := repository.GetUserByID(id.(uint), database)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read user data",
+		})
+		return
+	}
+
+	newPassword, err := randomPassword()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to generate password",
+		})
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to hash password",
+		})
+		return
+	}
+
+	if err := sendPasswordEmail(userData.Email, newPassword); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to send password email",
+		})
+		return
+	}
+
+	userData.Password = string(hash)
+
+	if repository.UpdateUser(&userData, database) != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update user",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Password reset successfully",
+	})
+}
+
+func randomPassword() (string, error) {
+	const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	b := make([]byte, 12)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	for i := range b {
+		b[i] = charset[int(b[i])%len(charset)]
+	}
+	return string(b), nil
+}
+
+func GetReservations(c *gin.Context, database *gorm.DB) {
+	id, _ := c.Get("ID")
+	reservations, err := repository.GetReservationsByUserID(id.(uint), database)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get reservations",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, reservations)
+}
+
+func DeleteReservation(c *gin.Context, database *gorm.DB) {
+	id, _ := c.Get("ID")
+	var body struct {
+		ClassID uint `json:"class_id"`
+	}
+	if c.BindJSON(&body) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read body",})
+		return
+	}
+	if err := repository.DeleteReservationByUserIDAndClassID(id.(uint), body.ClassID, database); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			c.JSON(http.StatusNotFound, gin.H{
+				"error": "Reservation not found",
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to delete reservation",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Reservation deleted successfully",
+	})
+}
+
+func ForgotPassword(c *gin.Context, database *gorm.DB) {
+	var body struct {
+		Email string `json:"email"`
+	}
+
+	if c.BindJSON(&body) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read body",
+		})
+		return
+	}
+
+	userData, err := repository.GetUserByEmail(body.Email, database)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read user data",
+		})
+		return
+	}
+
+	newPassword, err := randomPassword()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to generate password",
+		})
+		return
+	}
+
+	hash, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to hash password",
+		})
+		return
+	}
+
+	if err := sendPasswordEmail(userData.Email, newPassword); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to send password email",
+		})
+		return
+	}
+
+	userData.Password = string(hash)
+	if repository.UpdateUser(&userData, database) != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update user",
+		})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Password reset successfully",
+	})
 }

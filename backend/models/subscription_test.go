@@ -4,7 +4,7 @@ import "testing"
 
 func TestSubscriptionFactory_ValidBasic(t *testing.T) {
 	sub, err := SubscriptionFactory(
-		SubscriptionWithType(Basic),
+		SubscriptionWithType("Basic"),
 		SubscriptionWithPrice(29.99),
 		SubscriptionWithAdminID(1),
 	)
@@ -12,8 +12,8 @@ func TestSubscriptionFactory_ValidBasic(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if sub.Type != Basic {
-		t.Errorf("expected type Basic, got %v", sub.Type)
+	if sub.Type != "Basic" {
+		t.Errorf("expected type 'Basic', got %v", sub.Type)
 	}
 	if sub.Price != 29.99 {
 		t.Errorf("expected price 29.99, got %v", sub.Price)
@@ -25,7 +25,7 @@ func TestSubscriptionFactory_ValidBasic(t *testing.T) {
 
 func TestSubscriptionFactory_ValidPremium(t *testing.T) {
 	sub, err := SubscriptionFactory(
-		SubscriptionWithType(Premium),
+		SubscriptionWithType("Premium"),
 		SubscriptionWithPrice(59.99),
 		SubscriptionWithAdminID(1),
 	)
@@ -33,14 +33,14 @@ func TestSubscriptionFactory_ValidPremium(t *testing.T) {
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if sub.Type != Premium {
-		t.Errorf("expected type Premium, got %v", sub.Type)
+	if sub.Type != "Premium" {
+		t.Errorf("expected type 'Premium', got %v", sub.Type)
 	}
 }
 
 func TestSubscriptionFactory_ZeroPriceIsValid(t *testing.T) {
 	_, err := SubscriptionFactory(
-		SubscriptionWithType(Basic),
+		SubscriptionWithType("Basic"),
 		SubscriptionWithPrice(0),
 		SubscriptionWithAdminID(1),
 	)
@@ -52,7 +52,7 @@ func TestSubscriptionFactory_ZeroPriceIsValid(t *testing.T) {
 
 func TestSubscriptionFactory_NegativePrice(t *testing.T) {
 	_, err := SubscriptionFactory(
-		SubscriptionWithType(Basic),
+		SubscriptionWithType("Basic"),
 		SubscriptionWithPrice(-1.0),
 		SubscriptionWithAdminID(1),
 	)
@@ -64,7 +64,7 @@ func TestSubscriptionFactory_NegativePrice(t *testing.T) {
 
 func TestSubscriptionFactory_ZeroAdminID(t *testing.T) {
 	_, err := SubscriptionFactory(
-		SubscriptionWithType(Basic),
+		SubscriptionWithType("Basic"),
 		SubscriptionWithPrice(29.99),
 	)
 
