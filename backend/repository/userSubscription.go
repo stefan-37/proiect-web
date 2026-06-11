@@ -47,3 +47,11 @@ func GetPaymentsByUserID(id uint, database *gorm.DB) ([]models.UserSubscription,
 	return payments, nil
 }
 
+func GetAllUserSubscriptions(database *gorm.DB) ([]models.UserSubscription, error) {
+	var userSubscriptions []models.UserSubscription
+	err := database.Find(&userSubscriptions).Error
+	if err != nil {
+		return nil, err
+	}
+	return userSubscriptions, nil
+}

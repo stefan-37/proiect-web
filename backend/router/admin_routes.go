@@ -14,4 +14,10 @@ func registerAdminRoutes(r *gin.Engine) {
 	admin.PUT("/update", middleware.AuthMiddleware("admin"), handler.AdminUpdate)
 	admin.GET("/get", middleware.AuthMiddleware("admin"), handler.AdminGet)
 	admin.POST("/class", middleware.AuthMiddleware("admin"), handler.AdminCreateClass)
+	admin.PUT("/class", middleware.AuthMiddleware("admin"), handler.AdminUpdateClass)
+	admin.GET("/trainers", middleware.AuthMiddleware("admin"), handler.GetTrainers)
+	admin.POST("/trainer", middleware.AuthMiddleware("admin"), handler.AdminCreateTrainer)
+	admin.DELETE("/trainer", middleware.AuthMiddleware("admin"), handler.AdminTrainerDelete)
+	admin.GET("/profit", middleware.AuthMiddleware("admin"), handler.GetProfit)
+	admin.GET("/users", middleware.AuthMiddleware("admin"), handler.GetUsers)
 }

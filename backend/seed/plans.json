@@ -1,4 +1,4 @@
 [
-  {"type": "Basic", "price": 149.99, "AdminID": 0},
-  {"type": "Premium", "price": 229.99, "AdminID": 0}
+  {"type": "Basic", "price": 149.99, "description": ["Access to gym floor", "Locker room access"], "AdminID": 0},
+  {"type": "Premium", "price": 229.99, "description": ["Everything in Basic", "Unlimited classes", "Personal trainer session"], "AdminID": 0}
 ]

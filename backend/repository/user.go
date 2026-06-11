@@ -63,3 +63,12 @@ func DeleteUserByID(id uint, database *gorm.DB) error {
 	}
 	return nil
 }
+
+func GetAllUsers(database *gorm.DB) ([]models.User, error) {
+	var users []models.User
+	err := database.Find(&users)
+	if err.Error != nil {
+		return nil, err.Error
+	}
+	return users, nil
+}

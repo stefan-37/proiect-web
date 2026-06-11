@@ -23,6 +23,7 @@ func TrainerSignUp(c *gin.Context, database *gorm.DB) {
 		models.TrainerWithName(body.Name),
 		models.TrainerWithEmail(body.Email),
 		models.TrainerWithPassword(body.Password),
+		models.TrainerWithClass(body.Class),
 		models.TrainerWithAdminID(body.AdminID),
 	)
 

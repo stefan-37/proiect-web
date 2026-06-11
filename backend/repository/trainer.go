@@ -53,3 +53,12 @@ func DeleteTrainerByID(id uint, database *gorm.DB) error{
 	}
 	return nil
 }	
+
+func GetAllTrainers(database *gorm.DB) ([]models.Trainer, error) {
+	var trainers []models.Trainer
+	err := database.Find(&trainers)
+	if err.Error != nil {
+		return nil, err.Error
+	}
+	return trainers, nil
+}

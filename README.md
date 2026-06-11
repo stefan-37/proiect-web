@@ -38,8 +38,8 @@ backend/
 
 - **User** — gym member; can subscribe to a plan. Signup requires `name`, `email`, `password`, and `phone` (all non-empty).
 - **Admin** — manages trainers and subscription plans.
-- **Trainer** — created under an admin; can create classes.
-- **Subscription** — a plan tier (`Basic`, `Premium`) with a price, owned by an admin.
+- **Trainer** — created under an admin; can create classes. Has a required `class` field naming the discipline they teach (e.g. `Yoga`, `Pilates`). Password hashes are never serialized (`json:"-"`).
+- **Subscription** — a plan tier (`Basic`, `Premium`) with a price and a `description` (a non-empty list of feature strings, stored as JSON via a GORM serializer), owned by an admin.
 - **UserSubscription** — links a user to a subscription with `StartedAt` / `ExpiresAt`.
 - **Class** — scheduled session created by a trainer. Tracks `Capacity` and a live `Users` count; bookings are rejected once `Users` reaches `Capacity`.
 - **BookingSituation** — links a user to a class they booked. Created via `/user/book`, which checks the class's remaining capacity and increments the class's `Users` count atomically (the class row is locked for the duration so concurrent bookings can't overbook). Listed via `/user/reservations` and cancelled via `/user/reservation`, which deletes the booking and decrements the class's `Users` count in the same locked transaction so the freed slot becomes bookable again.
@@ -65,6 +65,7 @@ classDiagram
         int id
         string type
         float price
+        string[] description
         int adminID
     }
     class UserSubscription {
@@ -81,6 +82,7 @@ classDiagram
         string email
         string password
         string description
+        string class
         int adminID
     }
     class Classes {
@@ -159,6 +161,12 @@ All authenticated routes require a JWT cookie (`key`) with a `role` claim matchi
 | PUT    | `/admin/update`  | admin | Update current admin  |
 | DELETE | `/admin/delete`  | admin | Delete current admin  |
 | POST   | `/admin/class`   | admin | Create a class (no trainer; `TrainerID` 0) |
+| PUT    | `/admin/class`   | admin | Update a class by `id` — replaces `name`, `description`, `price`, `capacity` (other fields preserved) |
+| GET    | `/admin/trainers`| admin | List all trainers (password hashes are never serialized) |
+| POST   | `/admin/trainer` | admin | Create a trainer (`name`, `email`, `password`, `class`); owned by the calling admin |
+| DELETE | `/admin/trainer` | admin | Delete a trainer by `id` (JSON body `{ "id": <uint> }`) |
+| GET    | `/admin/profit`  | admin | Revenue data: returns `{ userSubscriptions, bookings, subscriptions, classes }` — the raw sale/booking rows plus the plan and class lists so the client can resolve ids to prices and total it |
+| GET    | `/admin/users`   | admin | List all users — returns `{ users }` with every `User` row (note: the `password` hash is serialized, unlike `/admin/trainers`) |
 
 Admin accounts are seeded from `seed/admins.json` — there is no public signup endpoint.
 

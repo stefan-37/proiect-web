@@ -9,6 +9,7 @@ func TestTrainerFactory_ValidTrainer(t *testing.T) {
 		TrainerWithPassword("pass123"),
 		TrainerWithAdminID(1),
 		TrainerWithDescription("Certified personal trainer"),
+		TrainerWithClass("Yoga"),
 	)
 
 	if err != nil {
@@ -22,6 +23,9 @@ func TestTrainerFactory_ValidTrainer(t *testing.T) {
 	}
 	if trainer.Description != "Certified personal trainer" {
 		t.Errorf("expected description set, got '%s'", trainer.Description)
+	}
+	if trainer.Class != "Yoga" {
+		t.Errorf("expected class 'Yoga', got '%s'", trainer.Class)
 	}
 }
 
@@ -58,11 +62,24 @@ func TestTrainerFactory_EmptyPassword(t *testing.T) {
 	}
 }
 
+func TestTrainerFactory_EmptyClass(t *testing.T) {
+	_, err := TrainerFactory(
+		TrainerWithName("Bob"),
+		TrainerWithEmail("bob@gym.com"),
+		TrainerWithPassword("pass123"),
+	)
+
+	if err == nil {
+		t.Fatal("expected error for empty class, got nil")
+	}
+}
+
 func TestTrainerFactory_DescriptionIsOptional(t *testing.T) {
 	_, err := TrainerFactory(
 		TrainerWithName("Bob"),
 		TrainerWithEmail("bob@gym.com"),
 		TrainerWithPassword("pass123"),
+		TrainerWithClass("Yoga"),
 	)
 
 	if err != nil {

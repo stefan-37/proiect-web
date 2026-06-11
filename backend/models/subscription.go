@@ -2,31 +2,39 @@ package models
 
 import (
 	"fmt"
+
 	"gorm.io/gorm"
 )
 
 type Subscription struct {
 	gorm.Model
-	Type    string           `json:"type" gorm:"not null"`
-	Price   float64          `json:"price" gorm:"not null"`
-	AdminID uint             `json:"admin_id" gorm:"not null"`
+	Type        string   `json:"type" gorm:"not null"`
+	Price       float64  `json:"price" gorm:"not null"`
+	Description []string `json:"description" gorm:"serializer:json"`
+	AdminID     uint     `json:"admin_id" gorm:"not null"`
 }
 
 type SubscriptionOption func(*Subscription)
 
-func SubscriptionWithType(subscriptionType string) SubscriptionOption{
+func SubscriptionWithType(subscriptionType string) SubscriptionOption {
 	return func(s *Subscription) {
 		s.Type = subscriptionType
 	}
 }
-func SubscriptionWithPrice(price float64) SubscriptionOption{
+func SubscriptionWithPrice(price float64) SubscriptionOption {
 	return func(s *Subscription) {
 		s.Price = price
 	}
 }
-func SubscriptionWithAdminID(adminID uint) SubscriptionOption{
+func SubscriptionWithAdminID(adminID uint) SubscriptionOption {
 	return func(s *Subscription) {
 		s.AdminID = adminID
+	}
+}
+
+func SubscriptionWithDescription(description []string) SubscriptionOption {
+	return func(s *Subscription) {
+		s.Description = description
 	}
 }
 
@@ -36,6 +44,12 @@ func (s *Subscription) SubscriptionBuild() error {
 	}
 	if s.AdminID == 0 {
 		return fmt.Errorf("invalid admin ID")
+	}
+	if s.Type == "" {
+		return fmt.Errorf("invalid type")
+	}
+	if len(s.Description) == 0 {
+		return fmt.Errorf("invalid description")
 	}
 	return nil
 }
@@ -47,7 +61,6 @@ func SubscriptionFactory(options ...SubscriptionOption) (*Subscription, error) {
 	}
 	if err := subscription.SubscriptionBuild(); err != nil {
 		return nil, err
-	}	
+	}
 	return subscription, nil
 }
-

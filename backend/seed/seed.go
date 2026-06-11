@@ -24,7 +24,7 @@ func LoadPlans(path string, database *gorm.DB) error {
 
 	for _, plan := range plans {
 		err := database.Where(map[string]any{"type": plan.Type}).
-    		Attrs(models.Subscription{Price: plan.Price, AdminID: plan.AdminID}).
+    		Attrs(models.Subscription{Price: plan.Price, Description: plan.Description, AdminID: plan.AdminID}).
     		FirstOrCreate(&plan)
 			if err.Error != nil {
     			return err.Error
@@ -80,7 +80,7 @@ func LoadTrainers(path string, database *gorm.DB) error {
 			return herr
 		}
 		err := database.Where(map[string]any{"email": trainer.Email}).
-			Attrs(models.Trainer{Name: trainer.Name, Password: string(hash), Description: trainer.Description, AdminID: trainer.AdminID}).
+			Attrs(models.Trainer{Name: trainer.Name, Password: string(hash), Description: trainer.Description, Class: trainer.Class, AdminID: trainer.AdminID}).
 			FirstOrCreate(&trainer)
 		if err.Error != nil {
 			return err.Error

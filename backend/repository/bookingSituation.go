@@ -63,3 +63,11 @@ func DeleteReservationByUserIDAndClassID(userID uint, classID uint, database *go
 	})
 }
 
+func GetAllBookings(database *gorm.DB) ([]models.BookingSituation, error) {
+	var bookings []models.BookingSituation
+	err := database.Find(&bookings).Error
+	if err != nil {
+		return nil, err
+	}
+	return bookings, nil
+}

@@ -10,8 +10,9 @@ type Trainer struct {
 	gorm.Model
 	Name        string `json:"name" gorm:"not null"`
 	Email       string `json:"email" gorm:"unique not null"`
-	Password    string `json:"password" gorm:"not null"`
+	Password    string `json:"-" gorm:"not null"`
 	Description string `json:"description"`
+	Class       string `json:"class" gorm:"not null"`
 	AdminID     uint   `json:"admin_id" gorm:"not null"`
 }
 
@@ -47,6 +48,12 @@ func TrainerWithAdminID(adminID uint) TrainerOption {
 	}
 }
 
+func TrainerWithClass(class string) TrainerOption {
+	return func(t *Trainer) {
+		t.Class = class
+	}
+}
+
 func (t *Trainer) TrainerBuild() error {
 	if t.Name == "" {
 		return fmt.Errorf("invalid name")
@@ -56,6 +63,9 @@ func (t *Trainer) TrainerBuild() error {
 	}
 	if t.Password == "" {
 		return fmt.Errorf("invalid password")
+	}
+	if t.Class == "" {
+		return fmt.Errorf("invalid class")
 	}
 	return nil
 }

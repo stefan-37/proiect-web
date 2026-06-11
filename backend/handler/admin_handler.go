@@ -24,3 +24,27 @@ func AdminGet(c *gin.Context) {
 func AdminCreateClass(c *gin.Context) {
 	service.AdminCreateClass(c, database)
 }
+
+func GetTrainers(c *gin.Context) {
+	service.GetTrainers(c, database)
+}
+
+func AdminTrainerDelete(c *gin.Context) {
+	service.AdminTrainerDelete(c, database)
+}
+
+func GetProfit(c *gin.Context) {
+	service.GetProfit(c, database)
+}
+
+func AdminUpdateClass(c *gin.Context) {
+	service.AdminUpdateClass(c, database)
+}
+
+func AdminCreateTrainer(c *gin.Context) {
+	service.AdminCreateTrainer(c, database)
+}
+
+func GetUsers(c *gin.Context) {
+	service.GetUsers(c, database)
+}

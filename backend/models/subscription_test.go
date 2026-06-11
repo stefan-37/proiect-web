@@ -7,6 +7,7 @@ func TestSubscriptionFactory_ValidBasic(t *testing.T) {
 		SubscriptionWithType("Basic"),
 		SubscriptionWithPrice(29.99),
 		SubscriptionWithAdminID(1),
+		SubscriptionWithDescription([]string{"Access to gym floor"}),
 	)
 
 	if err != nil {
@@ -21,6 +22,9 @@ func TestSubscriptionFactory_ValidBasic(t *testing.T) {
 	if sub.AdminID != 1 {
 		t.Errorf("expected admin_id 1, got %d", sub.AdminID)
 	}
+	if len(sub.Description) != 1 || sub.Description[0] != "Access to gym floor" {
+		t.Errorf("expected description set, got %v", sub.Description)
+	}
 }
 
 func TestSubscriptionFactory_ValidPremium(t *testing.T) {
@@ -28,6 +32,7 @@ func TestSubscriptionFactory_ValidPremium(t *testing.T) {
 		SubscriptionWithType("Premium"),
 		SubscriptionWithPrice(59.99),
 		SubscriptionWithAdminID(1),
+		SubscriptionWithDescription([]string{"Unlimited classes"}),
 	)
 
 	if err != nil {
@@ -43,10 +48,23 @@ func TestSubscriptionFactory_ZeroPriceIsValid(t *testing.T) {
 		SubscriptionWithType("Basic"),
 		SubscriptionWithPrice(0),
 		SubscriptionWithAdminID(1),
+		SubscriptionWithDescription([]string{"Free tier"}),
 	)
 
 	if err != nil {
 		t.Fatalf("expected zero price to be valid, got %v", err)
+	}
+}
+
+func TestSubscriptionFactory_EmptyDescription(t *testing.T) {
+	_, err := SubscriptionFactory(
+		SubscriptionWithType("Basic"),
+		SubscriptionWithPrice(29.99),
+		SubscriptionWithAdminID(1),
+	)
+
+	if err == nil {
+		t.Fatal("expected error for empty description, got nil")
 	}
 }
 
