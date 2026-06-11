@@ -330,3 +330,40 @@ func GetUsers(c *gin.Context, database *gorm.DB) {
 		"users": users,
 	})
 }
+
+func AdminUpdateSubscription(c *gin.Context, database *gorm.DB) {
+	var body struct {
+		ID          uint   `json:"id"`
+		Type        string `json:"type"`
+		Price       float64  `json:"price"`
+		Description []string `json:"description"`
+		FreeClasses bool     `json:"free_classes"`
+	}
+	if c.BindJSON(&body) != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read body",
+		})
+		return
+	}
+	subscription, err := repository.GetSubscriptionByID(body.ID, database)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to read subscription data",
+		})
+		return
+	}
+
+	subscription.Type = body.Type
+	subscription.Price = body.Price
+	subscription.Description = body.Description
+	subscription.FreeClasses = body.FreeClasses
+	if repository.UpdateSubscription(&subscription, database) != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to update subscription",
+		})
+		return
+	}	
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Subscription updated successfully",
+	})
+} 

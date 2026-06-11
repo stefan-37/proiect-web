@@ -30,6 +30,15 @@ func BookClass(bookingSituation *models.BookingSituation, database *gorm.DB) err
 	})
 }
 
+func GetBookingByIDAndUserID(id uint, userID uint, database *gorm.DB) (models.BookingSituation, error) {
+	var booking models.BookingSituation
+	err := database.Where("id = ? AND user_id = ?", id, userID).First(&booking)
+	if err.Error != nil {
+		return models.BookingSituation{}, err.Error
+	}
+	return booking, nil
+}
+
 func GetReservationsByUserID(userID uint, database *gorm.DB) ([]models.BookingSituation, error) {
 	var reservations []models.BookingSituation
 	err := database.Where("user_id = ?", userID).Find(&reservations).Error

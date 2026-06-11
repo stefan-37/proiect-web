@@ -20,4 +20,5 @@ func registerAdminRoutes(r *gin.Engine) {
 	admin.DELETE("/trainer", middleware.AuthMiddleware("admin"), handler.AdminTrainerDelete)
 	admin.GET("/profit", middleware.AuthMiddleware("admin"), handler.GetProfit)
 	admin.GET("/users", middleware.AuthMiddleware("admin"), handler.GetUsers)
+	admin.POST("/subscription", middleware.AuthMiddleware("admin"), handler.AdminUpdateSubscription)
 }

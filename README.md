@@ -39,7 +39,7 @@ backend/
 - **User** — gym member; can subscribe to a plan. Signup requires `name`, `email`, `password`, and `phone` (all non-empty).
 - **Admin** — manages trainers and subscription plans.
 - **Trainer** — created under an admin; can create classes. Has a required `class` field naming the discipline they teach (e.g. `Yoga`, `Pilates`). Password hashes are never serialized (`json:"-"`).
-- **Subscription** — a plan tier (`Basic`, `Premium`) with a price and a `description` (a non-empty list of feature strings, stored as JSON via a GORM serializer), owned by an admin.
+- **Subscription** — a plan tier (`Basic`, `Premium`) with a price, a `description` (a non-empty list of feature strings, stored as JSON via a GORM serializer), and a `free_classes` flag indicating whether the plan includes free classes, owned by an admin.
 - **UserSubscription** — links a user to a subscription with `StartedAt` / `ExpiresAt`.
 - **Class** — scheduled session created by a trainer. Tracks `Capacity` and a live `Users` count; bookings are rejected once `Users` reaches `Capacity`.
 - **BookingSituation** — links a user to a class they booked. Created via `/user/book`, which checks the class's remaining capacity and increments the class's `Users` count atomically (the class row is locked for the duration so concurrent bookings can't overbook). Listed via `/user/reservations` and cancelled via `/user/reservation`, which deletes the booking and decrements the class's `Users` count in the same locked transaction so the freed slot becomes bookable again.
@@ -66,6 +66,7 @@ classDiagram
         string type
         float price
         string[] description
+        bool free_classes
         int adminID
     }
     class UserSubscription {
@@ -151,6 +152,8 @@ All authenticated routes require a JWT cookie (`key`) with a `role` claim matchi
 | GET    | `/user/reservations`  | user      | List the user's class reservations |
 | DELETE | `/user/reservation`   | user      | Cancel a class reservation (frees the slot) |
 | GET    | `/user/payments`      | user      | Payment history: returns `{ payments, subscriptions, classes, reservations }` — the user's purchases and reservations plus the full plan and class lists so the client can resolve `subscription_id`/`class_id` to a type/price/name |
+| POST   | `/user/receipt`       | user      | Download a PDF receipt (`application/pdf`) for a specific subscription purchase; send `{ "id": <userSubscriptionID> }` in the body. The `UserSubscription` must belong to the caller (404 otherwise) |
+| POST   | `/user/booking-receipt` | user    | Download a PDF receipt (`application/pdf`) for a specific class booking; send `{ "id": <bookingSituationID> }` in the body. The `BookingSituation` must belong to the caller (404 otherwise) |
 
 ### `/admin`
 

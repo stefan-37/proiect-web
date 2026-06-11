@@ -23,4 +23,6 @@ func registerUserRoutes(r *gin.Engine) {
 	user.GET("/reservations", middleware.AuthMiddleware("user"), handler.GetReservations)
 	user.DELETE("/reservation", middleware.AuthMiddleware("user"), handler.DeleteReservation)
 	user.GET("/payments", middleware.AuthMiddleware("user"), handler.GetUserPayments)
+	user.POST("/receipt", middleware.AuthMiddleware("user"), handler.GetUserReceipt)
+	user.POST("/booking-receipt", middleware.AuthMiddleware("user"), handler.GetBookingReceipt)
 }

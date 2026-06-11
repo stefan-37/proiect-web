@@ -24,7 +24,7 @@ func LoadPlans(path string, database *gorm.DB) error {
 
 	for _, plan := range plans {
 		err := database.Where(map[string]any{"type": plan.Type}).
-    		Attrs(models.Subscription{Price: plan.Price, Description: plan.Description, AdminID: plan.AdminID}).
+    		Attrs(models.Subscription{Price: plan.Price, Description: plan.Description, FreeClasses: plan.FreeClasses, AdminID: plan.AdminID}).
     		FirstOrCreate(&plan)
 			if err.Error != nil {
     			return err.Error

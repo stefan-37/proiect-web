@@ -11,6 +11,7 @@ type Subscription struct {
 	Type        string   `json:"type" gorm:"not null"`
 	Price       float64  `json:"price" gorm:"not null"`
 	Description []string `json:"description" gorm:"serializer:json"`
+	FreeClasses bool     `json:"free_classes" gorm:"not null"`
 	AdminID     uint     `json:"admin_id" gorm:"not null"`
 }
 
@@ -35,6 +36,12 @@ func SubscriptionWithAdminID(adminID uint) SubscriptionOption {
 func SubscriptionWithDescription(description []string) SubscriptionOption {
 	return func(s *Subscription) {
 		s.Description = description
+	}
+}
+
+func SubscriptionWithFreeClasses(freeClasses bool) SubscriptionOption {
+	return func(s *Subscription) {
+		s.FreeClasses = freeClasses
 	}
 }
 

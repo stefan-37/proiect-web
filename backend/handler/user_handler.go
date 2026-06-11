@@ -60,3 +60,11 @@ func ForgotPassword(c *gin.Context) {
 func GetUserPayments(c *gin.Context) {
 	service.GetUserPayments(c, database)
 }
+
+func GetUserReceipt(c *gin.Context) {
+	service.GetUserReceipt(c, database)
+}
+
+func GetBookingReceipt(c *gin.Context) {
+	service.GetBookingReceipt(c, database)
+}

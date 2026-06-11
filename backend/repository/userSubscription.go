@@ -22,6 +22,15 @@ func GetUserSubscriptionByUserID(id uint, database *gorm.DB) (models.UserSubscri
 	return userSubscription, nil
 }
 
+func GetUserSubscriptionByIDAndUserID(id uint, userID uint, database *gorm.DB) (models.UserSubscription, error) {
+	var userSubscription models.UserSubscription
+	err := database.Where("id = ? AND user_id = ?", id, userID).First(&userSubscription)
+	if err.Error != nil {
+		return models.UserSubscription{}, err.Error
+	}
+	return userSubscription, nil
+}
+
 func UpdateUserSubscription(userSubscription models.UserSubscription, database *gorm.DB) error {
 	err := database.Save(&userSubscription)
 	if err.Error != nil {

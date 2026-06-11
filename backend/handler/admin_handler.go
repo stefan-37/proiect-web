@@ -48,3 +48,7 @@ func AdminCreateTrainer(c *gin.Context) {
 func GetUsers(c *gin.Context) {
 	service.GetUsers(c, database)
 }
+
+func AdminUpdateSubscription(c *gin.Context) {
+	service.AdminUpdateSubscription(c, database)
+}

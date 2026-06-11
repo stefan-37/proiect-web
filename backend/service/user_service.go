@@ -431,3 +431,99 @@ func GetUserPayments(c *gin.Context, database *gorm.DB) {
 		"reservations":  reservations,
 	})
 }
+
+func GetUserReceipt(c *gin.Context, database *gorm.DB) {
+	id, _ := c.Get("ID")
+
+	user, err := repository.GetUserByID(id.(uint), database)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
+		})
+		return
+	}
+
+	var body struct {
+		ID uint `json:"id"`
+	}
+	if c.BindJSON(&body) != nil || body.ID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid or missing subscription id",
+		})
+		return
+	}
+
+	us, err := repository.GetUserSubscriptionByIDAndUserID(body.ID, id.(uint), database)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "User subscription not found",
+		})
+		return
+	}
+
+	sub, err := repository.GetSubscriptionByID(us.SubscriptionID, database)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get subscription",
+		})
+		return
+	}
+
+	pdfBytes, err := GeneratePaymentReceipt(&user, &sub, &us)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to generate receipt",
+		})
+		return
+	}
+
+	c.Data(http.StatusOK, "application/pdf", pdfBytes)
+}
+
+func GetBookingReceipt(c *gin.Context, database *gorm.DB) {
+	id, _ := c.Get("ID")
+
+	user, err := repository.GetUserByID(id.(uint), database)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get user",
+		})
+		return
+	}
+
+	var body struct {
+		ID uint `json:"id"`
+	}
+	if c.BindJSON(&body) != nil || body.ID == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Invalid or missing booking id",
+		})
+		return
+	}
+
+	bs, err := repository.GetBookingByIDAndUserID(body.ID, id.(uint), database)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"error": "Booking not found",
+		})
+		return
+	}
+
+	class, err := repository.GetClassByID(bs.ClassID, database)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to get class",
+		})
+		return
+	}
+
+	pdfBytes, err := GenerateBookingReceipt(&user, &class, &bs)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to generate receipt",
+		})
+		return
+	}
+
+	c.Data(http.StatusOK, "application/pdf", pdfBytes)
+}
