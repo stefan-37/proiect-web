@@ -1,0 +1,95 @@
+# Prometheus — metrics collector + query UI. Three objects in one file (same
+# pattern as 04-nginx.yaml): a ConfigMap with the scrape config, a Deployment
+# running the prom/prometheus image with that config mounted, and a NodePort
+# Service so you can open the web UI from your host.
+#
+# Uses STATIC scrape targets (Service DNS names), not Kubernetes service
+# discovery, so it needs no ServiceAccount/RBAC. That's enough for a fixed,
+# single-node stack like this one.
+#
+# NOTE: the "backend" job only returns data once the Go app exposes /metrics.
+# Until then Prometheus shows that target as DOWN (connection refused / 404),
+# which is expected — the "prometheus" self-scrape job still works.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prometheus-conf
+data:
+  prometheus.yml: |
+    global:
+      scrape_interval: 15s          # how often to poll each target
+
+    scrape_configs:
+      # Prometheus scraping itself — always works, good for confirming it's up.
+      - job_name: prometheus
+        static_configs:
+          - targets: ["localhost:9090"]
+
+      # The Go API. "backend:8080" is the in-cluster DNS name of the Service in
+      # 03-backend.yaml. Requires a /metrics handler in the app (see README).
+      - job_name: backend
+        static_configs:
+          - targets: ["backend:8080"]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus:latest
+          args:
+            - "--config.file=/etc/prometheus/prometheus.yml"
+            # tsdb lives on an emptyDir below: metrics history is LOST when the
+            # pod restarts. Fine for local dev. Swap to a PVC (like postgres in
+            # 01-postgres.yaml) if you want history to survive restarts.
+            - "--storage.tsdb.path=/prometheus"
+          ports:
+            - containerPort: 9090
+          readinessProbe:
+            httpGet:
+              path: /-/ready          # Prometheus' own health endpoint
+              port: 9090
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /-/healthy
+              port: 9090
+            periodSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            - name: conf
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: prometheus.yml   # overlay only the file, like nginx.conf
+            - name: data
+              mountPath: /prometheus
+      volumes:
+        - name: conf
+          configMap:
+            name: prometheus-conf
+        - name: data
+          emptyDir: {}                  # ephemeral; see tsdb note above
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prometheus
+spec:
+  type: NodePort                  # reach the UI from your host, like nginx
+  selector:
+    app: prometheus
+  ports:
+    - port: 9090
+      targetPort: 9090
+      nodePort: 30090             # http://<node-ip>:30090

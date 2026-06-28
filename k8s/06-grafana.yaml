@@ -1,0 +1,82 @@
+# Grafana — dashboards on top of Prometheus. Same shape as 05-prometheus.yaml:
+# a ConfigMap (this time "provisioning" config that auto-connects the Prometheus
+# data source), a Deployment running the grafana image, and a NodePort Service.
+#
+# The provisioning ConfigMap means you DON'T have to add the data source by hand
+# in the UI — Grafana reads it on boot and the "Prometheus" source is ready.
+# http://prometheus:9090 is the in-cluster DNS name of the Service in
+# 05-prometheus.yaml.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-datasource
+data:
+  datasource.yml: |
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy            # Grafana pod calls Prometheus server-side
+        url: http://prometheus:9090
+        isDefault: true
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: grafana/grafana:latest
+          env:
+            # Dev login. Change before any non-local use (or move to a Secret
+            # like app-secrets in 00-secret.yaml).
+            - name: GF_SECURITY_ADMIN_USER
+              value: admin
+            - name: GF_SECURITY_ADMIN_PASSWORD
+              value: admin
+          ports:
+            - containerPort: 3000
+          readinessProbe:
+            httpGet:
+              path: /api/health        # Grafana's own health endpoint
+              port: 3000
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 3000
+            periodSeconds: 10
+            failureThreshold: 3
+          volumeMounts:
+            # Drop the datasource file into Grafana's provisioning dir. A plain
+            # directory mount here, so the filename inside is datasource.yml.
+            - name: datasource
+              mountPath: /etc/grafana/provisioning/datasources
+      volumes:
+        - name: datasource
+          configMap:
+            name: grafana-datasource
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+spec:
+  type: NodePort
+  selector:
+    app: grafana
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30030          # http://<node-ip>:30030 (use port-forward on kind)

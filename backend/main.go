@@ -12,8 +12,15 @@ import (
 
 func main() {
 	database := db.GetDB()
-	database.AutoMigrate(&models.User{}, &models.Admin{}, &models.Trainer{}, &models.Subscription{}, &models.UserSubscription{}, &models.Class{}, &models.BookingSituation{}, &models.Person{})
-	seed.LoadPlans("seed/plans.json", database)
+	dberr := database.AutoMigrate(&models.User{}, &models.Admin{}, &models.Trainer{}, &models.Subscription{}, &models.UserSubscription{}, &models.Class{}, &models.BookingSituation{}, &models.Person{})
+	if dberr != nil {
+		log.Fatal(dberr)
+	}
+
+	err := seed.LoadPlans("seed/plans.json", database)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	go func() {
 		for {
@@ -23,7 +30,7 @@ func main() {
 		}
 	}()
 
-	go func(){
+	go func() {
 		for {
 			seed.LoadAdmins("seed/admins.json", database)
 			seed.LoadTrainers("seed/trainers.json", database)
@@ -33,5 +40,7 @@ func main() {
 	}()
 
 	router := router.SetupRouter()
-	router.Run(":8080")
+	if router.Run(":8080") != nil {
+		log.Fatal("Unable to start server")
+	}
 }

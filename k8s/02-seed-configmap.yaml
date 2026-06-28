@@ -1,0 +1,20 @@
+# Replaces the seed/*.json bind-mounts from Compose (which mounted only admins.json
+# and trainers.json). These two files are overlaid into the image's /running/seed
+# via subPath mounts in 03-backend.yaml, so plans.json and classes.json baked into
+# the image stay visible. Edit here + restart the backend pod to change seeds
+# without rebuilding the image.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seed-files
+data:
+  admins.json: |
+    [
+      {"name": "admin1", "email": "admin1@example.com", "password": "password1"},
+      {"name": "admin2", "email": "admin2@example.com", "password": "password2"}
+    ]
+  trainers.json: |
+    [
+      {"name": "trainer1", "email": "trainer1@example.com", "password": "password1", "description": " ", "admin_id": 1, "class": "Yoga"},
+      {"name": "trainer2", "email": "trainer2@example.com", "password": "password2", "description": " ", "admin_id": 1, "class": "Pilates"}
+    ]

@@ -1,0 +1,68 @@
+# Postgres = stateful, so StatefulSet + PVC (not a Deployment).
+# The Service MUST be named "postgres" because backend/db/db.go has a hard-coded
+# DSN pointing at hostname "postgres". Same name => zero Go changes.
+apiVersion: v1
+kind: Service
+metadata:
+  name: postgres
+spec:
+  selector:
+    app: postgres
+  ports:
+    - port: 5432
+      targetPort: 5432
+  clusterIP: None        # headless service, idiomatic for a StatefulSet
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: postgres
+spec:
+  serviceName: postgres
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postgres
+  template:
+    metadata:
+      labels:
+        app: postgres
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:17-alpine
+          ports:
+            - containerPort: 5432
+          env:
+            - name: POSTGRES_USER
+              value: postgres
+            - name: POSTGRES_DB
+              value: mydatabase
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: app-secrets
+                  key: POSTGRES_PASSWORD
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:               # replaces the Compose pg_isready healthcheck
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", "mydatabase"]
+            initialDelaySeconds: 5
+            periodSeconds: 2
+            timeoutSeconds: 3
+          livenessProbe:                # restarts the DB pod if it stops accepting connections
+            exec:
+              command: ["pg_isready", "-U", "postgres", "-d", "mydatabase"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            failureThreshold: 3
+  volumeClaimTemplates:                 # replaces the named volume postgres_data
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 1Gi

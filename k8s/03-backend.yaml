@@ -1,0 +1,89 @@
+# The Go API. Service MUST be named "backend" because nginx.conf proxies to
+# http://backend:8080. Deployment (stateless) + an initContainer that waits for
+# Postgres (the K8s replacement for Compose's depends_on: condition: service_healthy).
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend
+spec:
+  selector:
+    app: backend
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  # Keep at 1: the seeder + 24h subscription-checker goroutines run inside the
+  # process, so N replicas = N copies of those jobs. Move them to a CronJob
+  # before scaling up.
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      initContainers:
+        # Replaces Compose's "depends_on postgres healthy". Blocks until the DB
+        # accepts connections so the backend doesn't crash-loop on first boot.
+        - name: wait-for-postgres
+          image: postgres:17-alpine
+          command:
+            - sh
+            - -c
+            - "until pg_isready -h postgres -U postgres -d mydatabase; do echo waiting for postgres; sleep 2; done"
+      containers:
+        - name: backend
+          image: gym-backend:local        # built locally, loaded into kind/minikube
+          imagePullPolicy: IfNotPresent     # use the local image, don't pull from a registry
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: app-secrets           # key, EMAIL, EMAIL_PASSWORD
+          volumeMounts:
+            # subPath overlays ONLY these two files (mirrors the Compose per-file
+            # bind mounts). A plain directory mount here would shadow plans.json
+            # and classes.json that the image bakes in, and the app fatals on boot.
+            - name: seed
+              mountPath: /running/seed/admins.json
+              subPath: admins.json
+            - name: seed
+              mountPath: /running/seed/trainers.json
+              subPath: trainers.json
+          # Pods in a Deployment always have restartPolicy: Always, so a crashed
+          # process is restarted automatically. The livenessProbe below extends
+          # that to a *hung* process: if the port stops accepting connections for
+          # failureThreshold consecutive checks, the kubelet kills and restarts
+          # the container. (TCP-only: confirms the port is open, not DB health.)
+
+          # startupProbe guards the first boot (AutoMigrate + plan/admin seeding).
+          # While it runs, liveness/readiness are held off, so a slow start can't
+          # trigger a restart. Allows up to 30 * 5s = 150s to come up.
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 30
+
+          readinessProbe:                    # gates traffic; does NOT restart
+            tcpSocket:
+              port: 8080
+            periodSeconds: 5
+            failureThreshold: 3
+
+          livenessProbe:                     # restarts the pod on repeated failure
+            tcpSocket:
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3
+      volumes:
+        - name: seed
+          configMap:
+            name: seed-files
